@@ -5,6 +5,8 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <ctime>
+#include <string>
 
 #include "bitmap_image.hpp"
 #include "glm/geometric.hpp"
@@ -33,7 +35,7 @@ static const vec3 black(0, 0, 0);
 const int W = 500;
 const int H = 500;
 const int RAYS_PER_PIXEL = 4;
-const int MAX_RAY_REFLECTIONS = 4;
+const int MAX_RAY_REFLECTIONS = 8;
 
 deque<Ray> Deq;
 
@@ -174,7 +176,7 @@ vec3 traceRay(Ray &ray) {
                                       Sphere(vec3(11,0,25),5, violet, make_unique<DiffuseMaterial>()),
                                       Sphere(vec3(0,15,15),2, white, make_unique<LightMaterial>())};
 
-    static const Plane planes[1] = {Plane(0, 0, 1, -16, blue, make_unique<DiffuseMaterial>())};
+    static const Plane planes[1] = {Plane(0, 1, 0, 5, yellow, make_unique<DiffuseMaterial>())};
 
     vec3 result = black;
 
@@ -204,11 +206,10 @@ vec3 traceRay(Ray &ray) {
     } else if (type == 2) {
         vec3 pi = ray.getBegin() + ray.getDir() * t;
         vec3 N = planes[cur].getNormal(pi);
-        if ((planes[cur].A * spheres[3].c.x + planes[cur].B * spheres[3].c.y + planes[cur].C * spheres[3].c.z + planes[cur].D) *
-        (planes[cur].A * (pi + N).x + planes[cur].B * (pi + N).y + planes[cur].C * (pi + N).z + planes[cur].D) < 0) {
+        vec3 L = spheres[3].c - pi;
+        if (dot(L, N) < 0) {
             N *= -1;
         }
-        vec3 L = spheres[3].c - pi;
         planes[cur].material->process(ray, pi, N, L, result, t, planes[cur].col, spheres[3].col);
     }
 
@@ -252,5 +253,11 @@ int main() {
         }
     }
 
+    time_t t = time(0);   // get time now
+    struct tm * now = localtime( & t );
+    string date = to_string(now->tm_year + 1900) + '-' + to_string(now->tm_mon + 1) + '-' +
+            to_string(now->tm_mday) + '-' + to_string(now->tm_hour) + '-' + to_string(now->tm_min) + '-' +
+            to_string(now->tm_sec);
+    image.save_image(date + ".bmp");
     image.save_image("2.bmp");
 }
