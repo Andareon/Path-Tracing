@@ -56,7 +56,7 @@ public:
 
     int getY() {return y;}
 
-    Ray(vec3 i, vec3 j, int k, int l, int m) {begin=i, dir=j, depth=k, x=l, y=m;}
+    Ray(vec3 i, vec3 j, int k, int l, int m) {begin=i, dir=normalize(j), depth=k, x=l, y=m;}
 };
 
 class BaseMaterial {
@@ -102,7 +102,7 @@ struct Sphere {
 
     bool intersect(Ray &ray, float &t) const {
         vec3 o = ray.getBegin();
-        vec3 d = normalize(ray.getDir());
+        vec3 d = ray.getDir();
         vec3 oc = o-c;
         float b = 2 * dot(oc, d);
         float c = dot(oc, oc) - r*r;
@@ -115,6 +115,36 @@ struct Sphere {
             float t1 = (-b+disc)/2;
             float newT = (t0 < t1) ? t0 :t1;
             if (t > newT) {
+                t = newT;
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+};
+
+struct Plane {
+    float A, B, C, D;
+    vec3 col;
+    vec3 N;
+    unique_ptr<BaseMaterial> material;
+    Plane(float i, float j, float g, float f, vec3 k, unique_ptr<BaseMaterial> &&m){A=i, B=j, C=g, D=f, col=k,
+                                                                                    material=move(m),
+                                                                                    N=normalize(vec3(A, B, C));}
+
+    vec3 getNormal(vec3 pi) const {
+        return N;
+    }
+
+    bool intersect(Ray &ray, float &t) const {
+        vec3 o = ray.getBegin();
+        vec3 d = ray.getDir();
+        if (dot(N, d) == 0) {
+            return false;
+        } else {
+            float newT = -((dot(o, N) + D) / dot(d, N));
+            if (t > newT && newT > 0) {
                 t = newT;
                 return true;
             } else {
@@ -144,22 +174,44 @@ vec3 traceRay(Ray &ray) {
                                       Sphere(vec3(11,0,25),5, violet, make_unique<DiffuseMaterial>()),
                                       Sphere(vec3(0,15,15),2, white, make_unique<LightMaterial>())};
 
+    static const Plane planes[1] = {Plane(0, 0, 1, -16, blue, make_unique<DiffuseMaterial>())};
+
     vec3 result = black;
 
     float t = 20000000;
-    int i = 0, cur=-1;
+    int i = 0, cur=-1, type=0;
     for (const auto &sphere: spheres) {
         if (sphere.intersect(ray, t)) {
             cur = i;
+            type = 1;
         }
         ++i;
     }
-    if (cur > -1) {
+    i = 0;
+    for (const auto &plane: planes) {
+        if (plane.intersect(ray, t)) {
+            cur = i;
+            type = 2;
+        }
+        ++i;
+    }
+
+    if (type == 1) {
         vec3 pi = ray.getBegin() + ray.getDir() * t;
         vec3 N = spheres[cur].getNormal(pi);
         vec3 L = spheres[3].c - pi;
         spheres[cur].material->process(ray, pi, N, L, result, t, spheres[cur].col, spheres[3].col);
+    } else if (type == 2) {
+        vec3 pi = ray.getBegin() + ray.getDir() * t;
+        vec3 N = planes[cur].getNormal(pi);
+        if ((planes[cur].A * spheres[3].c.x + planes[cur].B * spheres[3].c.y + planes[cur].C * spheres[3].c.z + planes[cur].D) *
+        (planes[cur].A * (pi + N).x + planes[cur].B * (pi + N).y + planes[cur].C * (pi + N).z + planes[cur].D) < 0) {
+            N *= -1;
+        }
+        vec3 L = spheres[3].c - pi;
+        planes[cur].material->process(ray, pi, N, L, result, t, planes[cur].col, spheres[3].col);
     }
+
     return saturate(result);
 }
 
