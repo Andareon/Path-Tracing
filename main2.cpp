@@ -32,7 +32,7 @@ static const vec3 black(0, 0, 0);
 
 const int W = 500;
 const int H = 500;
-const int RAYS_PER_PIXEL = 2;
+const int RAYS_PER_PIXEL = 4;
 const int MAX_RAY_REFLECTIONS = 4;
 
 deque<Ray> Deq;
@@ -56,7 +56,7 @@ class MirrorMaterial : public BaseMaterial {
 public:
     void process(Ray ray, vec3 pi, vec3 N, vec3 L, vec3 &result, float t, vec3 col, vec3 lc) {
         vec3 ans = reflect(-ray.d, N);
-        Deq.push_back(Ray(pi + N * 1e-7f, normalize(ans), ray.depth + 1, ray.x, ray.y));
+        Deq.emplace_back(pi + N * 1e-7f, normalize(ans), ray.depth + 1, ray.x, ray.y);
     }
 };
 
@@ -155,8 +155,6 @@ vec3 traceRay(const Ray &ray) {
 int main() {
     vector<vector<vec3> > ColorMap(H, vector<vec3>(W, vec3(0)));
     vector<vector<int> > samplesCount(H, vector<int>(W, 0));
-
-    deque<Ray> Deq;
 
     bitmap_image image(H, W);
     image.clear();
