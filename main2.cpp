@@ -21,10 +21,7 @@ float randFloat(const float min, const float max);
 float saturate(float x);
 vec3 traceRay(const Ray& ray);
 
-const int W = 500;
-const int H = 500;
-const int RAYS_PER_PIXEL = 2;
-const int MAX_RAY_REFLECTIONS = 2;
+
 
 static const vec3 white(255, 255, 255);
 static const vec3 red(255, 0, 0);
@@ -33,8 +30,10 @@ static const vec3 violet(255, 0, 255);
 static const vec3 yellow(255, 255, 0);
 static const vec3 black(0, 0, 0);
 
-vector<vector<vec3> > ColorMap(H, vector<vec3>(W, vec3(0)));
-vector<vector<int> > samplesCount(H, vector<int>(W, 0));
+const int W = 500;
+const int H = 500;
+const int RAYS_PER_PIXEL = 2;
+const int MAX_RAY_REFLECTIONS = 4;
 
 deque<Ray> Deq;
 
@@ -57,9 +56,7 @@ class MirrorMaterial : public BaseMaterial {
 public:
     void process(Ray ray, vec3 pi, vec3 N, vec3 L, vec3 &result, float t, vec3 col, vec3 lc) {
         vec3 ans = reflect(-ray.d, N);
-        if (ray.depth < 2) {
-            Deq.push_back(Ray(pi + N * 1e-7f, normalize(ans), ray.depth + 1, ray.x, ray.y));
-        }
+        Deq.push_back(Ray(pi + N * 1e-7f, normalize(ans), ray.depth + 1, ray.x, ray.y));
     }
 };
 
@@ -126,7 +123,7 @@ vec3 saturate(vec3 x) {
     return vec3(saturate(x.r), saturate(x.g), saturate(x.b));
 }
 
-vec3 traceRay(const Ray& ray) {
+vec3 traceRay(const Ray &ray) {
 
 
     static const Sphere spheres[4] = {Sphere(vec3(-11,7,20),5, red, make_unique<DiffuseMaterial>()),
@@ -154,16 +151,21 @@ vec3 traceRay(const Ray& ray) {
 }
 
 
+
 int main() {
+    vector<vector<vec3> > ColorMap(H, vector<vec3>(W, vec3(0)));
+    vector<vector<int> > samplesCount(H, vector<int>(W, 0));
+
+    deque<Ray> Deq;
+
     bitmap_image image(H, W);
     image.clear();
-
     for (int y = 0; y < H; ++y) {
         for (int x = 0; x < W; ++x) {
             float r = 0, g = 0, b = 0;
             for (int i = 0; i < RAYS_PER_PIXEL; ++i) {
-                vec3 dir = vec3(static_cast<float>(x - W / 2 + randFloat(-0.5f, 0.5f) * 0.f) / W,
-                                -static_cast<float>(y - H / 2 + randFloat(-0.5f, 0.5f) * 0) / H,
+                vec3 dir = vec3((x - W / 2 + randFloat(-0.5f, 0.5f)) / W,
+                                -(y - H / 2 + randFloat(-0.5f, 0.5f)) / H,
                                 1);
                 Deq.push_back(Ray(vec3(0, 0, -20), normalize(dir), 0, x, y));
             }
@@ -173,9 +175,11 @@ int main() {
     while (!Deq.empty()) {
         Ray ray = Deq[0];
         Deq.pop_front();
-        vec3 c = traceRay(ray);
-        ColorMap[ray.y][ray.x] += c;
-        samplesCount[ray.y][ray.x] += 1;
+        if (ray.depth < MAX_RAY_REFLECTIONS) {
+            vec3 c = traceRay(ray);
+            ColorMap[ray.y][ray.x] += c;
+            samplesCount[ray.y][ray.x] += 1;
+        }
     }
 
     for (int x = 0; x < W; ++x) {
