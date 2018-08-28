@@ -10,6 +10,7 @@
 #include "glm/geometric.hpp"
 #include "glm/vec3.hpp"
 
+typedef vec3 vec1;
 using namespace std;
 using namespace glm;
 
@@ -164,9 +165,9 @@ int main() {
         for (int x = 0; x < W; ++x) {
             float r = 0, g = 0, b = 0;
             for (int i = 0; i < RAYS_PER_PIXEL; ++i) {
-                vec3 dir = vec3((x - W / 2 + randFloat(-0.5f, 0.5f)) / W,
-                                -(y - H / 2 + randFloat(-0.5f, 0.5f)) / H,
-                                1);
+                vec1 dir = vec3((x - W / 2 + randFloat(-0.5f, 0.5f)) / W,
+                                                -(y - H / 2 + randFloat(-0.5f, 0.5f)) / H,
+                                                1);
                 Deq.push_back(Ray(vec3(0, 0, -20), normalize(dir), 0, x, y));
             }
         }
