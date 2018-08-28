@@ -17,7 +17,7 @@ struct Ray;
 struct BaseMaterial;
 struct MirrorMaterial;
 struct Sphere;
-float randFloat(const float min, const float max);
+float randFloat(float min, float max);
 float saturate(float x);
 vec3 traceRay(const Ray& ray);
 
@@ -37,13 +37,26 @@ const int MAX_RAY_REFLECTIONS = 4;
 
 deque<Ray> Deq;
 
-struct Ray {
-    vec3 o;
-    vec3 d;
+class Ray {
+private:
+    vec3 begin;
+    vec3 dir;
     int depth = 0;
     int x=0;
     int y=0;
-    Ray(vec3 i, vec3 j, int k, int l, int m) {o=i, d=j, depth=k, x=l, y=m;}
+
+public:
+    vec3 getBegin() {return begin;}
+
+    vec3 getDir() {return dir;}
+
+    int getDepth() {return depth;}
+
+    int getX() {return x;}
+
+    int getY() {return y;}
+
+    Ray(vec3 i, vec3 j, int k, int l, int m) {begin=i, dir=j, depth=k, x=l, y=m;}
 };
 
 class BaseMaterial {
@@ -55,8 +68,8 @@ public:
 class MirrorMaterial : public BaseMaterial {
 public:
     void process(Ray ray, vec3 pi, vec3 N, vec3 L, vec3 &result, float t, vec3 col, vec3 lc) {
-        vec3 ans = reflect(-ray.d, N);
-        Deq.emplace_back(pi + N * 1e-7f, normalize(ans), ray.depth + 1, ray.x, ray.y);
+        vec3 ans = reflect(-ray.getDir(), N);
+        Deq.emplace_back(pi + N * 1e-7f, normalize(ans), ray.getDepth() + 1, ray.getX(), ray.getY());
     }
 };
 
@@ -87,9 +100,9 @@ struct Sphere {
         return (pi - c) / r;
     }
 
-    bool intersect(const Ray &ray, float &t) const {
-        vec3 o = ray.o;
-        vec3 d = normalize(ray.d);
+    bool intersect(Ray &ray, float &t) const {
+        vec3 o = ray.getBegin();
+        vec3 d = normalize(ray.getDir());
         vec3 oc = o-c;
         float b = 2 * dot(oc, d);
         float c = dot(oc, oc) - r*r;
@@ -123,7 +136,7 @@ vec3 saturate(vec3 x) {
     return vec3(saturate(x.r), saturate(x.g), saturate(x.b));
 }
 
-vec3 traceRay(const Ray &ray) {
+vec3 traceRay(Ray &ray) {
 
 
     static const Sphere spheres[4] = {Sphere(vec3(-11,7,20),5, red, make_unique<DiffuseMaterial>()),
@@ -142,7 +155,7 @@ vec3 traceRay(const Ray &ray) {
         ++i;
     }
     if (cur > -1) {
-        vec3 pi = ray.o + ray.d * t;
+        vec3 pi = ray.getBegin() + ray.getDir() * t;
         vec3 N = spheres[cur].getNormal(pi);
         vec3 L = spheres[3].c - pi;
         spheres[cur].material->process(ray, pi, N, L, result, t, spheres[cur].col, spheres[3].col);
@@ -173,10 +186,10 @@ int main() {
     while (!Deq.empty()) {
         Ray ray = Deq[0];
         Deq.pop_front();
-        if (ray.depth < MAX_RAY_REFLECTIONS) {
+        if (ray.getDepth() < MAX_RAY_REFLECTIONS) {
             vec3 c = traceRay(ray);
-            ColorMap[ray.y][ray.x] += c;
-            samplesCount[ray.y][ray.x] += 1;
+            ColorMap[ray.getY()][ray.getX()] += c;
+            samplesCount[ray.getY()][ray.getX()] += 1;
         }
     }
 
