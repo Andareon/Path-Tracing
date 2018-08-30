@@ -31,10 +31,11 @@ static const vec3 blue(0, 0, 255);
 static const vec3 violet(255, 0, 255);
 static const vec3 yellow(255, 255, 0);
 static const vec3 black(0, 0, 0);
+static const vec3 green(0, 255, 0);
 
 const int W = 500;
 const int H = 500;
-const int RAYS_PER_PIXEL = 4;
+const int RAYS_PER_PIXEL = 1;
 const int MAX_RAY_REFLECTIONS = 8;
 
 deque<Ray> Deq;
@@ -70,8 +71,8 @@ public:
 class MirrorMaterial : public BaseMaterial {
 public:
     void process(Ray ray, vec3 pi, vec3 N, vec3 L, vec3 &result, float t, vec3 col, vec3 lc) {
-        vec3 ans = reflect(-ray.getDir(), N);
-        Deq.emplace_back(pi + N * 1e-7f, normalize(ans), ray.getDepth() + 1, ray.getX(), ray.getY());
+        vec3 ans = reflect(ray.getDir(), N);
+        Deq.emplace_back(pi + N * 0.5f, -normalize(ans), ray.getDepth() + 1, ray.getX(), ray.getY());
     }
 };
 
@@ -176,7 +177,8 @@ vec3 traceRay(Ray &ray) {
                                       Sphere(vec3(11,0,25),5, violet, make_unique<DiffuseMaterial>()),
                                       Sphere(vec3(0,15,15),2, white, make_unique<LightMaterial>())};
 
-    static const Plane planes[1] = {Plane(0, 1, 0, 5, yellow, make_unique<DiffuseMaterial>())};
+    static const Plane planes[2] = {Plane(0, -1, 0, 17, yellow, make_unique<DiffuseMaterial>()),
+                                    Plane(0, 1, 0, 17, blue, make_unique<DiffuseMaterial>())};
 
     vec3 result = black;
 
@@ -198,6 +200,7 @@ vec3 traceRay(Ray &ray) {
         ++i;
     }
 
+
     if (type == 1) {
         vec3 pi = ray.getBegin() + ray.getDir() * t;
         vec3 N = spheres[cur].getNormal(pi);
@@ -207,9 +210,6 @@ vec3 traceRay(Ray &ray) {
         vec3 pi = ray.getBegin() + ray.getDir() * t;
         vec3 N = planes[cur].getNormal(pi);
         vec3 L = spheres[3].c - pi;
-        if (dot(L, N) < 0) {
-            N *= -1;
-        }
         planes[cur].material->process(ray, pi, N, L, result, t, planes[cur].col, spheres[3].col);
     }
 
