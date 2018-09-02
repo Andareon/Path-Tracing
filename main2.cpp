@@ -71,8 +71,8 @@ public:
 class MirrorMaterial : public BaseMaterial {
 public:
     void process(Ray ray, vec3 pi, vec3 N, vec3 L, vec3 &result, float t, vec3 col, vec3 lc) {
-        vec3 ans = reflect(ray.getDir(), N);
-        Deq.emplace_back(pi + N * 0.5f, -normalize(ans), ray.getDepth() + 1, ray.getX(), ray.getY());
+        vec3 ans = reflect(-ray.getDir(), N);
+        Deq.emplace_back(pi + N * 1e-7f, normalize(ans), ray.getDepth() + 1, ray.getX(), ray.getY());
     }
 };
 
@@ -82,6 +82,7 @@ public:
         float dt = std::max(dot(normalize(L), normalize(N)), 0.0f);
         dt += 0.05f;
         result = col * dt;
+//        resul = col;
     }
 };
 
@@ -116,8 +117,8 @@ struct Sphere {
             disc = sqrt(disc);
             float t0 = (-b-disc)/2;
             float t1 = (-b+disc)/2;
-            float newT = (t0 < t1) ? t0 :t1;
-            if (t > newT) {
+            float newT = (t0 > 0) ? t0 :t1;
+            if (t > newT && newT > 0) {
                 t = newT;
                 return true;
             } else {
