@@ -39,7 +39,7 @@ static const vec3 green(0, 255, 0);
 
 const int W = 500;
 const int H = 500;
-const int RAYS_PER_PIXEL = 1;
+const int RAYS_PER_PIXEL = 200;
 const int MAX_RAY_REFLECTIONS = 8;
 
 class Ray {
@@ -74,7 +74,7 @@ class MirrorMaterial : public BaseMaterial {
 public:
     void process(Ray ray, vec3 pi, vec3 N, vec3 L, float t, vec3 col, vec3 lc, vector<vector<vec3> > &ColorMap, vector<vector<int> > &samplesCount, deque<Ray> &Rays) {
         vec3 ans = normalize(reflect(ray.getDir(), N));
-        Rays.emplace_back(pi + N * 1e-7f, normalize(ans), ray.getDepth() + 1, ray.getX(), ray.getY());
+        Rays.emplace_back(pi + N * 1e-4f, normalize(ans), ray.getDepth() + 1, ray.getX(), ray.getY());
     }
 };
 
@@ -84,7 +84,7 @@ public:
         float dt = std::max(dot(normalize(L), normalize(N)), 0.0f);
         dt += 0.05f;
         vec3 result = col * dt;
-        result = col;
+//        result = col;
         ColorMap[ray.getY()][ray.getX()] += saturate(result);
         samplesCount[ray.getY()][ray.getX()] += 1;
     }
@@ -208,11 +208,13 @@ void traceRay(Ray &ray, vector<vector<vec3> > &ColorMap, vector<vector<int> > &s
     }
 
     if (type == 1) {
+//        cout << ray.getBegin().x << ' ' << cur << ' ' << 0 << endl;
         vec3 pi = ray.getBegin() + ray.getDir() * t;
         vec3 N = spheres[cur].getNormal(pi);
         vec3 L = spheres[3].c - pi;
         spheres[cur].material->process(ray, pi, N, L, t, spheres[cur].col, spheres[3].col, ColorMap, samplesCount, Rays);
     } else if (type == 2) {
+//        cout << ray.getBegin().x << ' ' << cur << ' ' << 1 << endl;
         vec3 pi = ray.getBegin() + ray.getDir() * t;
         vec3 N = planes[cur].getNormal(pi);
         vec3 L = spheres[3].c - pi;
@@ -240,10 +242,18 @@ int main() {
                 vec3 dir = vec3((x - W / 2 + randFloat(-0.5f, 0.5f)) / W,
                         -(y - H / 2 + randFloat(-0.5f, 0.5f)) / H,
                         1);
+//                x = 246;
+//                y = 226;
+//                vec3 dir = vec3((float)(x - W / 2) / W,
+//                                (float)-(y - H / 2) / H,
+//                                1);
 
                 Rays.emplace_back(vec3(0, 0, -20), normalize(dir), 0, x, y);
+//                break;
             }
+//            break;
         }
+//        break;
     }
 
     while (!Rays.empty()) {
