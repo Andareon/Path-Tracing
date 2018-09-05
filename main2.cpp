@@ -42,7 +42,7 @@ static const vec3 green(0, 255, 0);
 
 const int W = 500;
 const int H = 500;
-const int RAYS_PER_PIXEL = 16;
+const int RAYS_PER_PIXEL = 1;
 const int MAX_RAY_REFLECTIONS = 8;
 
 class Ray {
@@ -76,7 +76,7 @@ public:
 class MirrorMaterial : public BaseMaterial {
 public:
     void process(Ray ray, vec3 pi, vec3 N, vec3 L, float t, vec3 col, vec3 lc, vector<vector<vec3> > &ColorMap, vector<vector<int> > &samplesCount) {
-        vec3 ans = reflect(ray.getDir(), N);
+        vec3 ans = normalize(reflect(ray.getDir(), N));
         Rays.emplace_back(pi + N * 1e-7f, normalize(ans), ray.getDepth() + 1, ray.getX(), ray.getY());
     }
 };
@@ -87,7 +87,7 @@ public:
         float dt = std::max(dot(normalize(L), normalize(N)), 0.0f);
         dt += 0.05f;
         vec3 result = col * dt;
-//        result = col;
+        result = col;
         ColorMap[ray.getY()][ray.getX()] += saturate(result);
         samplesCount[ray.getY()][ray.getX()] += 1;
     }
@@ -117,15 +117,15 @@ struct Sphere {
         vec3 o = ray.getBegin();
         vec3 d = ray.getDir();
         vec3 oc = o-c;
-        float b = 2 * dot(oc, d);
+        float b = dot(oc, d);
         float c = dot(oc, oc) - r*r;
-        float disc = b*b-4*c;
+        float disc = b*b-c;
         if (disc < 0) {
             return false;
         } else {
             disc = sqrt(disc);
-            float t0 = (-b-disc)/2;
-            float t1 = (-b+disc)/2;
+            float t0 = -b-disc;
+            float t1 = -b+disc;
             float newT = (t0 > 0) ? t0 :t1;
             if (t > newT && newT > 0) {
                 t = newT;
@@ -229,11 +229,11 @@ int main() {
     vector<vector<vec3> > ColorMap(H, vector<vec3>(W, vec3(0)));
     vector<vector<int> > samplesCount(H, vector<int>(W, 0));
 
-
-
     bitmap_image image(H, W);
 
     image.clear();
+
+
     for (int y = 0; y < H; ++y) {
         for (int x = 0; x < W; ++x) {
             float r = 0, g = 0, b = 0;
@@ -241,18 +241,18 @@ int main() {
                 vec3 dir = vec3((x - W / 2 + randFloat(-0.5f, 0.5f)) / W,
                         -(y - H / 2 + randFloat(-0.5f, 0.5f)) / H,
                         1);
-                Rays.emplace_back(vec3(0, 0, -40), normalize(dir), 0, x, y);
+
+                Rays.emplace_back(vec3(0, 0, -20), normalize(dir), 0, x, y);
             }
         }
     }
 
     while (!Rays.empty()) {
         Ray ray = Rays[0];
+//        cout << ray.getBegin().x << ' ' << ray.getBegin().y << ' ' << ray.getBegin().z << ' ' << ray.getDir().x << ' ' << ray.getDir().y << ' ' << ray.getDir().z << endl;
         Rays.pop_front();
         if (ray.getDepth() < MAX_RAY_REFLECTIONS) {
             traceRay(ray, ColorMap, samplesCount);
-//            ColorMap[ray.getY()][ray.getX()] += c;
-//            samplesCount[ray.getY()][ray.getX()] += 1;
         }
     }
 
@@ -260,16 +260,15 @@ int main() {
         for (int y = 0; y < H; ++y) {
             vec3 c = ColorMap[y][x];
             image.set_pixel(x, y, c.r / samplesCount[y][x], c.g / samplesCount[y][x], c.b / samplesCount[y][x]);
+            vec3 cur = vec3(c.r / samplesCount[y][x], c.g / samplesCount[y][x], c.b / samplesCount[y][x]);
         }
     }
 
-    time_t t = time(0);   // get time now
+    time_t t = time(0);
     struct tm * now = localtime( & t );
     string date = to_string(now->tm_year + 1900) + '-' + to_string(now->tm_mon + 1) + '-' +
             to_string(now->tm_mday) + '-' + to_string(now->tm_hour) + '-' + to_string(now->tm_min) + '-' +
             to_string(now->tm_sec);
     image.save_image(date + ".bmp");
     image.save_image("2.bmp");
-
-    cout << samplesCount[451][500];
 }
