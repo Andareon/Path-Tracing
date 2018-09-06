@@ -48,23 +48,23 @@ private:
     vec3 col = {1, 1, 1};
 
 public:
-    vec3 getBegin() {return begin;}
+    vec3 getBegin() const {return begin;}
 
     void setBegin(vec3 bg) {begin=bg;}
 
-    vec3 getDir() {return dir;}
+    vec3 getDir() const {return dir;}
 
     void setDir(vec3 dr) {dir=dr;}
 
-    int getDepth() {return depth;}
+    int getDepth() const {return depth;}
 
     void setDepth(int dp) {depth=dp;}
 
-    int getX() {return coodrs.x;}
+    int getX() const {return coodrs.x;}
 
-    int getY() {return coodrs.y;}
+    int getY() const {return coodrs.y;}
 
-    vec3 getCol() {return col;}
+    vec3 getCol() const {return col;}
 
     void setCol(vec3 cl) {col = cl;}
 
@@ -153,6 +153,7 @@ struct Sphere {
             disc = sqrt(disc);
             float t0 = -b-disc;
             float t1 = -b+disc;
+//            assert(t0 * t1 < 0);
             float newT = (t0 > 0) ? t0 :t1;
             if (t > newT && newT > 0) {
                 t = newT;
