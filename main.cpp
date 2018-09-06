@@ -35,9 +35,8 @@ static const vec3 green(0, 1, 0);
 
 const int W = 500;
 const int H = 500;
-const int RAYS_PER_PIXEL = 4;
+const int RAYS_PER_PIXEL = 16;
 const int MAX_RAY_REFLECTIONS = 4;
-const int DIFFUSE_RAY = 1;
 
 vec3 multiplyColor(vec3 color1, vec3 color2) {
     return vec3(color1.r * color2.r, color1.g * color2.g, color1.b * color2.b);
@@ -48,7 +47,7 @@ private:
     vec3 begin;
     vec3 dir;
     int depth = 0;
-    ivec2 coodrs = {0, 0};
+    ivec2 coords = {0, 0};
     vec3 col = vec3(1);
 
 public:
@@ -64,15 +63,13 @@ public:
 
     void setDepth(int dp) {depth=dp;}
 
-    int getX() const {return coodrs.x;}
-
-    int getY() const {return coodrs.y;}
-
+    ivec2 getCoords() const {return coords;}
+    
     vec3 getCol() const {return col;}
 
     void setCol(vec3 cl) {col = cl;}
 
-    Ray(vec3 i, vec3 j, int k, ivec2 l) {begin=i, dir=normalize(j), depth=k, coodrs=l;}
+    Ray(vec3 i, vec3 j, int k, ivec2 l) {begin=i, dir=normalize(j), depth=k, coords=l;}
 };
 
 class BaseMaterial {
@@ -85,7 +82,7 @@ class MirrorMaterial : public BaseMaterial {
 public:
     void process(Ray ray, vec3 pi, vec3 N, vec3 L, float t, vec3 col, vec3 lc, vector<vector<vec3> > &ColorMap, vector<vector<int> > &samplesCount, deque<Ray> &Rays) {
         if (ray.getCol() == black) {
-            ++samplesCount[ray.getY()][ray.getX()];
+            ++samplesCount[ray.getCoords().x][ray.getCoords().y];
             return;
         }
 
@@ -93,6 +90,9 @@ public:
         ray.setDir(normalize(reflect(ray.getDir(), N)));
         ray.setDepth(ray.getDepth() + 1);
         Rays.push_back(ray);
+
+//        vec3 ans = normalize(reflect(ray.getDir(), N));
+//        Rays.emplace_back(pi + N * 1e-4f, normalize(ans), ray.getDepth() + 1, ivec2(ray.getCoords().x, ray.getCoords().y));
     }
 };
 
@@ -100,20 +100,26 @@ class DiffuseMaterial : public BaseMaterial {
 public:
     void process(Ray ray, vec3 pi, vec3 N, vec3 L, float t, vec3 col, vec3 lc, vector<vector<vec3> > &ColorMap, vector<vector<int> > &samplesCount, deque<Ray> &Rays) {
         if (ray.getCol() == black) {
-            ++samplesCount[ray.getY()][ray.getX()];
+            ++samplesCount[ray.getCoords().x][ray.getCoords().y];
             return;
         }
 
-        for (int i = 0; i < DIFFUSE_RAY; ++i) {
-            vec3 rnd = {randFloat(-100.0f, 100.0f), randFloat(-100.0f, 100.0f), randFloat(-100.0f, 100.0f)};
-            rnd = normalize(rnd);
-            if (dot(N, rnd) < 0) {
-                rnd *= -1;
-            }
-            Ray q = Ray(pi + N * 1e-4f, normalize(rnd), ray.getDepth() + 1, ivec2(ray.getX(), ray.getY()));
-            q.setCol(multiplyColor(col, ray.getCol()));
-            Rays.push_back(q);
+        vec3 rnd = {randFloat(-100.0f, 100.0f), randFloat(-100.0f, 100.0f), randFloat(-100.0f, 100.0f)};
+        rnd = normalize(rnd);
+        if (dot(N, rnd) < 0) {
+            rnd *= -1;
         }
+        Ray q = Ray(pi + N * 1e-4f, normalize(rnd), ray.getDepth() + 1, ivec2(ray.getCoords().x, ray.getCoords().y));
+        q.setCol(multiplyColor(col, ray.getCol()));
+        Rays.push_back(q);
+
+//        float dt = std::max(dot(normalize(L), normalize(N)), 0.0f);
+//        dt += 0.05f;
+//        vec3 result = col * dt;
+//        ColorMap[ray.getCoords().x][ray.getCoords().y] += saturate(result);
+//        samplesCount[ray.getCoords().x][ray.getCoords().y] += 1;
+
+
     }
 };
 
@@ -121,8 +127,12 @@ class LightMaterial : public BaseMaterial {
 public:
     void process(Ray ray, vec3 pi, vec3 N, vec3 L, float t, vec3 col, vec3 lc, vector<vector<vec3> > &ColorMap, vector<vector<int> > &samplesCount, deque<Ray> &Rays) {
         vec3 result = multiplyColor(lc, ray.getCol());
-        ColorMap[ray.getY()][ray.getX()] += result;
-        ++samplesCount[ray.getY()][ray.getX()];
+        ColorMap[ray.getCoords().x][ray.getCoords().y] += result;
+        ++samplesCount[ray.getCoords().x][ray.getCoords().y];
+
+//        ColorMap[ray.getCoords().x][ray.getCoords().y] += lc;
+//        ++samplesCount[ray.getCoords().x][ray.getCoords().y];
+
     }
 };
 
@@ -268,7 +278,7 @@ int main() {
                                 -(y - H / 2 + randFloat(-0.5f, 0.5f)) / H,
                                 1);
 
-                Rays.emplace_back(vec3(0, 0, -20), dir, 0, x, y);
+                Rays.emplace_back(vec3(0, 0, -20), dir, 0, ivec2(x, y));
             }
         }
     }
@@ -284,7 +294,7 @@ int main() {
     for (int x = 0; x < W; ++x) {
         for (int y = 0; y < H; ++y) {
             vec3 c = ColorMap[x][y] / static_cast<float>(samplesCount[x][y]) * 255.0f;
-            image.set_pixel(y, x, c.r, c.g, c.b);
+            image.set_pixel(x, y, c.r, c.g, c.b);
         }
     }
 
@@ -294,5 +304,5 @@ int main() {
                   to_string(now->tm_mday) + '-' + to_string(now->tm_hour) + '-' + to_string(now->tm_min) + '-' +
                   to_string(now->tm_sec);
     image.save_image(date + ".bmp");
-    image.save_image("2.bmp");
+    image.save_image("last.bmp");
 }
