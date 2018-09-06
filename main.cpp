@@ -39,6 +39,10 @@ const int RAYS_PER_PIXEL = 4;
 const int MAX_RAY_REFLECTIONS = 4;
 const int DIFFUSE_RAY = 1;
 
+vec3 multiplyColor(vec3 color1, vec3 color2) {
+    return vec3(color1.r * color2.r, color1.g * color2.g, color1.b * color2.b);
+}
+
 class Ray {
 private:
     vec3 begin;
@@ -107,7 +111,7 @@ public:
                 rnd *= -1;
             }
             Ray q = Ray(pi + N * 1e-4f, normalize(rnd), ray.getDepth() + 1, ray.getX(), ray.getY());
-            q.setCol(col * ray.getCol());
+            q.setCol(multiplyColor(col, ray.getCol()));
             Rays.push_back(q);
         }
 
@@ -123,7 +127,7 @@ public:
 class LightMaterial : public BaseMaterial {
 public:
     void process(Ray ray, vec3 pi, vec3 N, vec3 L, float t, vec3 col, vec3 lc, vector<vector<vec3> > &ColorMap, vector<vector<int> > &samplesCount, deque<Ray> &Rays) {
-        vec3 result = lc * ray.getCol();
+        vec3 result = multiplyColor(lc, ray.getCol());
         ColorMap[ray.getY()][ray.getX()] += result;
         samplesCount[ray.getY()][ray.getX()] += 1;
     }
