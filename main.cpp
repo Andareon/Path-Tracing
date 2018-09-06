@@ -85,7 +85,7 @@ class MirrorMaterial : public BaseMaterial {
 public:
     void process(Ray ray, vec3 pi, vec3 N, vec3 L, float t, vec3 col, vec3 lc, vector<vector<vec3> > &ColorMap, vector<vector<int> > &samplesCount, deque<Ray> &Rays) {
         if (ray.getCol() == black) {
-            samplesCount[ray.getY()][ray.getX()] += 1;
+            ++samplesCount[ray.getY()][ray.getX()];
             return;
         }
 
@@ -100,7 +100,7 @@ class DiffuseMaterial : public BaseMaterial {
 public:
     void process(Ray ray, vec3 pi, vec3 N, vec3 L, float t, vec3 col, vec3 lc, vector<vector<vec3> > &ColorMap, vector<vector<int> > &samplesCount, deque<Ray> &Rays) {
         if (ray.getCol() == black) {
-            samplesCount[ray.getY()][ray.getX()] += 1;
+            ++samplesCount[ray.getY()][ray.getX()];
             return;
         }
 
@@ -120,7 +120,7 @@ public:
 //        dt += 0.05f;
 //        vec3 result = col * dt;
 //        ColorMap[ray.getY()][ray.getX()] += saturate(result);
-//        samplesCount[ray.getY()][ray.getX()] += 1;
+//        ++samplesCount[ray.getY()][ray.getX()];
     }
 };
 
@@ -129,7 +129,7 @@ public:
     void process(Ray ray, vec3 pi, vec3 N, vec3 L, float t, vec3 col, vec3 lc, vector<vector<vec3> > &ColorMap, vector<vector<int> > &samplesCount, deque<Ray> &Rays) {
         vec3 result = multiplyColor(lc, ray.getCol());
         ColorMap[ray.getY()][ray.getX()] += result;
-        samplesCount[ray.getY()][ray.getX()] += 1;
+        ++samplesCount[ray.getY()][ray.getX()];
     }
 };
 
