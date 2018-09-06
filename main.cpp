@@ -72,7 +72,7 @@ public:
 
     void setCol(vec3 cl) {col = cl;}
 
-    Ray(vec3 i, vec3 j, int k, int l, int m) {begin=i, dir=normalize(j), depth=k, coodrs.x=l, coodrs.y=m;}
+    Ray(vec3 i, vec3 j, int k, ivec2 l) {begin=i, dir=normalize(j), depth=k, coodrs=l;}
 };
 
 class BaseMaterial {
@@ -110,17 +110,10 @@ public:
             if (dot(N, rnd) < 0) {
                 rnd *= -1;
             }
-            Ray q = Ray(pi + N * 1e-4f, normalize(rnd), ray.getDepth() + 1, ray.getX(), ray.getY());
+            Ray q = Ray(pi + N * 1e-4f, normalize(rnd), ray.getDepth() + 1, ivec2(ray.getX(), ray.getY()));
             q.setCol(multiplyColor(col, ray.getCol()));
             Rays.push_back(q);
         }
-
-
-//        float dt = std::max(dot(normalize(L), normalize(N)), 0.0f);
-//        dt += 0.05f;
-//        vec3 result = col * dt;
-//        ColorMap[ray.getY()][ray.getX()] += saturate(result);
-//        ++samplesCount[ray.getY()][ray.getX()];
     }
 };
 
