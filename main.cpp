@@ -35,8 +35,8 @@ static const vec3 green(0, 1, 0);
 
 const int W = 500;
 const int H = 500;
-const int RAYS_PER_PIXEL = 100;
-const int MAX_RAY_REFLECTIONS = 1;
+const int RAYS_PER_PIXEL = 4;
+const int MAX_RAY_REFLECTIONS = 4;
 const int DIFFUSE_RAY = 1;
 
 class Ray {
@@ -50,9 +50,15 @@ private:
 public:
     vec3 getBegin() {return begin;}
 
+    void setBegin(vec3 bg) {begin=bg;}
+
     vec3 getDir() {return dir;}
 
+    void setDir(vec3 dr) {dir=dr;}
+
     int getDepth() {return depth;}
+
+    void setDepth(int dp) {depth=dp;}
 
     int getX() {return coodrs.x;}
 
@@ -78,10 +84,11 @@ public:
             samplesCount[ray.getY()][ray.getX()] += 1;
             return;
         }
-        vec3 ans = normalize(reflect(ray.getDir(), N));
-        Ray q = Ray(pi + N * 1e-4f, normalize(ans), ray.getDepth() + 1, ray.getX(), ray.getY());
-        q.setCol(col * ray.getCol());
-        Rays.push_back(q);
+
+        ray.setBegin(pi + N * 1e-4f);
+        ray.setDir(normalize(reflect(ray.getDir(), N)));
+        ray.setDepth(ray.getDepth() + 1);
+        Rays.push_back(ray);
     }
 };
 
@@ -258,7 +265,6 @@ int main() {
 
     for (int y = 0; y < H; ++y) {
         for (int x = 0; x < W; ++x) {
-            float r = 0, g = 0, b = 0;
             for (int i = 0; i < RAYS_PER_PIXEL; ++i) {
                 vec3 dir = vec3((x - W / 2 + randFloat(-0.5f, 0.5f)) / W,
                                 -(y - H / 2 + randFloat(-0.5f, 0.5f)) / H,
