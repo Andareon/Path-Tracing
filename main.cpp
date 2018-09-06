@@ -49,7 +49,7 @@ private:
     vec3 dir;
     int depth = 0;
     ivec2 coodrs = {0, 0};
-    vec3 col = {1, 1, 1};
+    vec3 col = vec3(1);
 
 public:
     vec3 getBegin() const {return begin;}
@@ -290,7 +290,7 @@ int main() {
 
     for (int x = 0; x < W; ++x) {
         for (int y = 0; y < H; ++y) {
-            vec3 c = ColorMap[x][y] * static_cast<float>(255);
+            vec3 c = ColorMap[x][y] / static_cast<float>(samplesCount[x][y]) * 255.0f;
             image.set_pixel(y, x, c.r, c.g, c.b);
         }
     }
