@@ -35,7 +35,7 @@ static const vec3 green(0, 1, 0);
 
 const int W = 500;
 const int H = 500;
-const int RAYS_PER_PIXEL = 1000;
+const int RAYS_PER_PIXEL = 100;
 const int MAX_RAY_REFLECTIONS = 1;
 const int DIFFUSE_RAY = 1;
 
