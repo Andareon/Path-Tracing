@@ -37,6 +37,7 @@ const int W = 500;
 const int H = 500;
 const int RAYS_PER_PIXEL = 16;
 const int MAX_RAY_REFLECTIONS = 4;
+const float Eps = 1e-4;
 
 vec3 multiplyColor(vec3 color1, vec3 color2) {
     return vec3(color1.r * color2.r, color1.g * color2.g, color1.b * color2.b);
@@ -93,12 +94,12 @@ public:
 //            return;
 //        }
 //
-//        ray.reflect(pi + N * 1e-4f, normalize(reflect(ray.getDir(), N)), ray.getCol());
+//        ray.reflect(pi + N * Eps, normalize(reflect(ray.getDir(), N)), ray.getCol());
 //        traceRay(ray, ColorMap, samplesCount, Rays);
 ////        Rays.push_back(ray);
 
         vec3 ans = normalize(reflect(ray.getDir(), N));
-        Rays.emplace_back(pi + N * 1e-4f, normalize(ans), ray.getDepth() + 1, ivec2(ray.getCoords().x, ray.getCoords().y));
+        Rays.emplace_back(pi + N * Eps, normalize(ans), ray.getDepth() + 1, ivec2(ray.getCoords().x, ray.getCoords().y));
     }
 };
 
@@ -115,7 +116,7 @@ public:
 //        if (dot(N, rnd) < 0) {
 //            rnd *= -1;
 //        }
-//        ray.reflect(pi + N * 1e-4f, rnd, multiplyColor(col, ray.getCol()));
+//        ray.reflect(pi + N * Eps, rnd, multiplyColor(col, ray.getCol()));
 //        traceRay(ray, ColorMap, samplesCount, Rays);
 ////        Rays.push_back(ray);
 
