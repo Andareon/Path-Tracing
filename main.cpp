@@ -68,7 +68,7 @@ public:
     
     vec3 getCol() const {return col;}
 
-    void setCol(vec3 cl) {col = cl;}
+    void setCol(vec3 cl) {col=cl;}
 
     void reflect(vec3 bg, vec3 dr, vec3 cl) {
         begin = bg;
