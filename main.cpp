@@ -16,15 +16,6 @@
 using namespace std;
 using namespace glm;
 
-struct Ray;
-struct BaseMaterial;
-struct MirrorMaterial;
-struct Sphere;
-float randFloat(float min, float max);
-float saturate(float x);
-vec3 saturate(vec3 x);
-void traceRay(Ray ray, vector<vector<vec3> > &ColorMap, vector<vector<int> > &samplesCount, deque<Ray> &Rays);
-
 static const vec3 white(1, 1, 1);
 static const vec3 red(1, 0, 0);
 static const vec3 blue(0, 0, 1);
@@ -37,10 +28,14 @@ const int W = 500;
 const int H = 500;
 const int RAYS_PER_PIXEL = 16;
 const int MAX_RAY_REFLECTIONS = 4;
-const float Eps = 1e-4;
+const float EPS = 1e-4;
 
-vec3 multiplyColor(vec3 color1, vec3 color2) {
-    return vec3(color1.r * color2.r, color1.g * color2.g, color1.b * color2.b);
+float saturate(float x) {
+    return std::max(std::min(1.0f, x), 0.0f);
+}
+
+vec3 saturate(vec3 x) {
+    return vec3(saturate(x.r), saturate(x.g), saturate(x.b));
 }
 
 class Ray {
@@ -94,12 +89,12 @@ public:
 //            return;
 //        }
 //
-//        ray.reflect(pi + N * Eps, reflect(ray.getDir(), N), ray.getCol());
+//        ray.reflect(pi + N * EPS, reflect(ray.getDir(), N), ray.getCol());
 //        traceRay(ray, ColorMap, samplesCount, Rays);
 ////        Rays.push_back(ray);
 
         vec3 ans = reflect(ray.getDir(), N);
-        Rays.emplace_back(pi + N * Eps, ans, ray.getDepth() + 1, ivec2(ray.getCoords().x, ray.getCoords().y));
+        Rays.emplace_back(pi + N * EPS, ans, ray.getDepth() + 1, ivec2(ray.getCoords().x, ray.getCoords().y));
     }
 };
 
@@ -116,7 +111,7 @@ public:
 //        if (dot(N, rnd) < 0) {
 //            rnd *= -1;
 //        }
-//        ray.reflect(pi + N * Eps, rnd, multiplyColor(col, ray.getCol()));
+//        ray.reflect(pi + N * EPS, rnd, multiplyColor(col, ray.getCol()));
 //        traceRay(ray, ColorMap, samplesCount, Rays);
 ////        Rays.push_back(ray);
 
@@ -211,14 +206,6 @@ struct Plane {
 
 float randFloat(const float min, const float max) {
     return (static_cast<float>(rand()) / RAND_MAX) * (max - min) + min;
-}
-
-float saturate(float x) {
-    return std::max(std::min(1.0f, x), 0.0f);
-}
-
-vec3 saturate(vec3 x) {
-    return vec3(saturate(x.r), saturate(x.g), saturate(x.b));
 }
 
 void traceRay(Ray ray, vector<vector<vec3> > &ColorMap, vector<vector<int> > &samplesCount, deque<Ray> &Rays) {
