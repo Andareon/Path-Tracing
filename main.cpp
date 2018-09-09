@@ -94,12 +94,12 @@ public:
 //            return;
 //        }
 //
-//        ray.reflect(pi + N * Eps, normalize(reflect(ray.getDir(), N)), ray.getCol());
+//        ray.reflect(pi + N * Eps, reflect(ray.getDir(), N), ray.getCol());
 //        traceRay(ray, ColorMap, samplesCount, Rays);
 ////        Rays.push_back(ray);
 
-        vec3 ans = normalize(reflect(ray.getDir(), N));
-        Rays.emplace_back(pi + N * Eps, normalize(ans), ray.getDepth() + 1, ivec2(ray.getCoords().x, ray.getCoords().y));
+        vec3 ans = reflect(ray.getDir(), N);
+        Rays.emplace_back(pi + N * Eps, ans, ray.getDepth() + 1, ivec2(ray.getCoords().x, ray.getCoords().y));
     }
 };
 
@@ -112,7 +112,7 @@ public:
 //        }
 //
 //        vec3 rnd = {randFloat(-100.0f, 100.0f), randFloat(-100.0f, 100.0f), randFloat(-100.0f, 100.0f)};
-//        rnd = normalize(rnd);
+//        rnd = rnd;
 //        if (dot(N, rnd) < 0) {
 //            rnd *= -1;
 //        }
@@ -224,24 +224,26 @@ vec3 saturate(vec3 x) {
 void traceRay(Ray ray, vector<vector<vec3> > &ColorMap, vector<vector<int> > &samplesCount, deque<Ray> &Rays) {
 
 
-    static const Sphere spheres[4] = {Sphere(vec3(-11,7,20),5, red, make_unique<DiffuseMaterial>()),
+    const int spheres_count = 4;
+    const int planes_count = 1;
+    static const Sphere spheres[spheres_count] = {Sphere(vec3(-11,7,20),5, red, make_unique<DiffuseMaterial>()),
                                       Sphere(vec3(0,0,35),5,blue, make_unique<MirrorMaterial>()),
                                       Sphere(vec3(11,0,25),5, violet, make_unique<DiffuseMaterial>()),
                                       Sphere(vec3(0,15,15),2, white, make_unique<LightMaterial>())};
 
-    static const Plane planes[1] = {Plane(0, 0, -1, 40, yellow, make_unique<DiffuseMaterial>())};
+    static const Plane planes[planes_count] = {Plane(0, 0, -1, 40, yellow, make_unique<DiffuseMaterial>())};
 
     vec3 result = black;
 
     float t = INFINITY;
     int i = 0, cur=-1, type=0;
-    for (i = 0; i < spheres.size(); ++i) {
+    for (i = 0; i < spheres_count; ++i) {
         if (spheres[i].intersect(ray, t)) {
             cur = i;
             type = 1;
         }
     }
-    for (i = 0; i < planes.size(); ++i) {
+    for (i = 0; i < planes_count; ++i) {
         if (planes[i].intersect(ray, t)) {
             cur = i;
             type = 2;
@@ -264,6 +266,7 @@ void traceRay(Ray ray, vector<vector<vec3> > &ColorMap, vector<vector<int> > &sa
 
 
 int main() {
+
     vector<vector<vec3> > ColorMap(W, vector<vec3>(H, vec3(0)));
     vector<vector<int> > samplesCount(W, vector<int>(H, 0));
 
