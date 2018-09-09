@@ -229,27 +229,23 @@ void traceRay(Ray ray, vector<vector<vec3> > &ColorMap, vector<vector<int> > &sa
                                       Sphere(vec3(11,0,25),5, violet, make_unique<DiffuseMaterial>()),
                                       Sphere(vec3(0,15,15),2, white, make_unique<LightMaterial>())};
 
-    static const Plane planes[2] = {Plane(0, -1, 0, 17, yellow, make_unique<DiffuseMaterial>()),
-                                    Plane(0, 1, 0, 17, blue, make_unique<DiffuseMaterial>())};
+    static const Plane planes[1] = {Plane(0, 0, -1, 40, yellow, make_unique<DiffuseMaterial>())};
 
     vec3 result = black;
 
     float t = INFINITY;
     int i = 0, cur=-1, type=0;
-    for (const auto &sphere: spheres) {
-        if (sphere.intersect(ray, t)) {
+    for (i = 0; i < spheres.size(); ++i) {
+        if (spheres[i].intersect(ray, t)) {
             cur = i;
             type = 1;
         }
-        ++i;
     }
-    i = 0;
-    for (const auto &plane: planes) {
-        if (plane.intersect(ray, t)) {
+    for (i = 0; i < planes.size(); ++i) {
+        if (planes[i].intersect(ray, t)) {
             cur = i;
             type = 2;
         }
-        ++i;
     }
 
     if (type == 1) {
