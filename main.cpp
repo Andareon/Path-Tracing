@@ -73,7 +73,7 @@ public:
         ++depth;
     }
 
-    Ray(vec3 i, vec3 j, int k, ivec2 l) {begin=i, dir=normalize(j), depth=k, coords=l;}
+    Ray(vec3 i, vec3 j, int k, ivec2 l) :begin(i), dir(normalize(j)), depth(k), coords(l) {}
 };
 
 class BaseMaterial {
