@@ -27,7 +27,7 @@ static const vec3 green(0, 1, 0);
 
 const int W = 500;
 const int H = 500;
-const int RAYS_PER_PIXEL = 4;
+const int RAYS_PER_PIXEL = 16;
 const int MAX_RAY_REFLECTIONS = 4;
 const float EPS = 1e-4;
 
@@ -48,7 +48,6 @@ private:
     vec3 col = vec3(1);
 
 public:
-
     vec3 getBegin() const {return begin;}
 
     void setBegin(vec3 bg) {begin=bg;}
@@ -70,18 +69,8 @@ public:
     void reflect(vec3 bg, vec3 dr, vec3 cl) {
         begin = bg;
         dir = dr;
-        col.r *= cl.r;
-        col.g *= cl.g;
-        col.b *= cl.b;
+        col = cl;
         ++depth;
-    }
-
-    bool is_valid() const {
-        return depth < MAX_RAY_REFLECTIONS;
-    }
-
-    void make_invalid() {
-        depth = MAX_RAY_REFLECTIONS + 1;
     }
 
     Ray(vec3 i, vec3 j, int k, ivec2 l) :begin(i), dir(normalize(j)), depth(k), coords(l) {}
@@ -89,46 +78,49 @@ public:
 
 class BaseMaterial {
 public:
-    virtual void process(Ray &ray, vec3 pi, vec3 N, vec3 L, float t, vec3 col, vec3 lc, vector<vector<vec3> > &ColorMap, vector<vector<int> > &samplesCount, deque<Ray> &Rays) = 0;
+    virtual void process(Ray ray, vec3 pi, vec3 N, vec3 L, float t, vec3 col, vec3 lc, vector<vector<vec3> > &ColorMap, vector<vector<int> > &samplesCount, deque<Ray> &Rays) = 0;
     virtual ~BaseMaterial() = default;
 };
 
 class MirrorMaterial : public BaseMaterial {
 public:
-    void process(Ray &ray, vec3 pi, vec3 N, vec3 L, float t, vec3 col, vec3 lc, vector<vector<vec3> > &ColorMap, vector<vector<int> > &samplesCount, deque<Ray> &Rays) {
-        if (ray.getCol() == black) {
-            ray.make_invalid();
-            return;
-        }
+    void process(Ray ray, vec3 pi, vec3 N, vec3 L, float t, vec3 col, vec3 lc, vector<vector<vec3> > &ColorMap, vector<vector<int> > &samplesCount, deque<Ray> &Rays) {
+//        if (ray.getCol() == black) {
+////            ++samplesCount[ray.getCoords().x][ray.getCoords().y];
+//            return;
+//        }
+//
+//        ray.reflect(pi + N * EPS, reflect(ray.getDir(), N), ray.getCol());
+//        traceRay(ray, ColorMap, samplesCount, Rays);
+////        Rays.push_back(ray);
 
-        ray.reflect(pi + N * EPS, reflect(ray.getDir(), N), white);
-
+        vec3 ans = reflect(ray.getDir(), N);
+        Rays.emplace_back(pi + N * EPS, ans, ray.getDepth() + 1, ivec2(ray.getCoords().x, ray.getCoords().y));
     }
 };
 
 class DiffuseMaterial : public BaseMaterial {
 public:
-    void process(Ray &ray, vec3 pi, vec3 N, vec3 L, float t, vec3 col, vec3 lc, vector<vector<vec3> > &ColorMap, vector<vector<int> > &samplesCount, deque<Ray> &Rays) {
-        if (ray.getCol() == black) {
-            ray.make_invalid();
-            return;
-        }
+    void process(Ray ray, vec3 pi, vec3 N, vec3 L, float t, vec3 col, vec3 lc, vector<vector<vec3> > &ColorMap, vector<vector<int> > &samplesCount, deque<Ray> &Rays) {
+//        if (ray.getCol() == black) {
+////            ++samplesCount[ray.getCoords().x][ray.getCoords().y];
+//            return;
+//        }
+//
+//        vec3 rnd = {randFloat(-100.0f, 100.0f), randFloat(-100.0f, 100.0f), randFloat(-100.0f, 100.0f)};
+//        rnd = rnd;
+//        if (dot(N, rnd) < 0) {
+//            rnd *= -1;
+//        }
+//        ray.reflect(pi + N * EPS, rnd, multiplyColor(col, ray.getCol()));
+//        traceRay(ray, ColorMap, samplesCount, Rays);
+////        Rays.push_back(ray);
 
-        std::mt19937 gen(time(0));
-        std::uniform_real_distribution<> urd(-100.0f, 100.0f);
-
-        vec3 rnd = {urd(gen), urd(gen), urd(gen)};
-        rnd = rnd;
-        if (dot(N, rnd) < 0) {
-            rnd *= -1;
-        }
-        ray.reflect(pi + N * EPS, rnd, col);
-
-//        float dt = std::max(dot(normalize(L), normalize(N)), 0.0f);
-//        dt += 0.05f;
-//        vec3 result = col * dt;
-//        ColorMap[ray.getCoords().x][ray.getCoords().y] += saturate(result);
-//        samplesCount[ray.getCoords().x][ray.getCoords().y] += 1;
+        float dt = std::max(dot(normalize(L), normalize(N)), 0.0f);
+        dt += 0.05f;
+        vec3 result = col * dt;
+        ColorMap[ray.getCoords().x][ray.getCoords().y] += saturate(result);
+        samplesCount[ray.getCoords().x][ray.getCoords().y] += 1;
 
 
     }
@@ -136,15 +128,13 @@ public:
 
 class LightMaterial : public BaseMaterial {
 public:
-    void process(Ray &ray, vec3 pi, vec3 N, vec3 L, float t, vec3 col, vec3 lc, vector<vector<vec3> > &ColorMap, vector<vector<int> > &samplesCount, deque<Ray> &Rays) {
+    void process(Ray ray, vec3 pi, vec3 N, vec3 L, float t, vec3 col, vec3 lc, vector<vector<vec3> > &ColorMap, vector<vector<int> > &samplesCount, deque<Ray> &Rays) {
 //        vec3 result = multiplyColor(lc, ray.getCol());
 //        ColorMap[ray.getCoords().x][ray.getCoords().y] += result;
 //        ++samplesCount[ray.getCoords().x][ray.getCoords().y];
 
-        ray.reflect(pi + N * EPS, vec3(0), lc);
-        ColorMap[ray.getCoords().x][ray.getCoords().y] += ray.getCol();
+        ColorMap[ray.getCoords().x][ray.getCoords().y] += lc;
         ++samplesCount[ray.getCoords().x][ray.getCoords().y];
-        ray.make_invalid();
 
     }
 };
@@ -215,7 +205,7 @@ struct Plane {
     }
 };
 
-void traceRay(Ray &ray, vector<vector<vec3> > &ColorMap, vector<vector<int> > &samplesCount, deque<Ray> &Rays) {
+void traceRay(Ray ray, vector<vector<vec3> > &ColorMap, vector<vector<int> > &samplesCount, deque<Ray> &Rays) {
 
 
     const int spheres_count = 4;
@@ -226,6 +216,8 @@ void traceRay(Ray &ray, vector<vector<vec3> > &ColorMap, vector<vector<int> > &s
                                       Sphere(vec3(0,15,5),2, white, make_unique<LightMaterial>())};
 
     static const Plane planes[planes_count] = {Plane(0, 0, -1, 40, green, make_unique<DiffuseMaterial>())};
+
+    vec3 result = black;
 
     float t = INFINITY;
     int i = 0, cur=-1, type=0;
@@ -262,9 +254,6 @@ int main() {
     std::uniform_real_distribution<> urd(-0.5f, 0.5f);
 
 
-    unsigned int start_time = clock();
-
-
     vector<vector<vec3> > ColorMap(W, vector<vec3>(H, vec3(0)));
     vector<vector<int> > samplesCount(W, vector<int>(H, 0));
 
@@ -277,16 +266,21 @@ int main() {
 
     for (int y = 0; y < H; ++y) {
         for (int x = 0; x < W; ++x) {
-            if (x % 100 == 0)
             for (int i = 0; i < RAYS_PER_PIXEL; ++i) {
                 vec3 dir = vec3((x - W / 2 + urd(gen)) / W,
                                 -(y - H / 2 + urd(gen)) / H,
                                 1);
-                Ray cur = Ray(vec3(0, 0, -20), dir, 0, ivec2(x, y));
-                while (cur.is_valid()) {
-                    traceRay(cur, ColorMap, samplesCount, Rays);
-                }
+//                traceRay(Ray(vec3(0, 0, -20), dir, 0, ivec2(x, y)), ColorMap, samplesCount, Rays);
+                Rays.emplace_back(vec3(0, 0, -20), dir, 0, ivec2(x, y));
             }
+        }
+    }
+
+    while (!Rays.empty()) {
+        Ray ray = Rays[0];
+        Rays.pop_front();
+        if (ray.getDepth() <= MAX_RAY_REFLECTIONS) {
+            traceRay(ray, ColorMap, samplesCount, Rays);
         }
     }
 
@@ -297,13 +291,11 @@ int main() {
         }
     }
 
-    unsigned int end_time = clock();
-
     time_t t = time(0);
     struct tm * now = localtime( & t );
     string date = to_string(now->tm_year + 1900) + '-' + to_string(now->tm_mon + 1) + '-' +
                   to_string(now->tm_mday) + '-' + to_string(now->tm_hour) + '-' + to_string(now->tm_min) + '-' +
-                  to_string(now->tm_sec) + "  " + to_string(end_time - start_time);
+                  to_string(now->tm_sec);
     image.save_image(date + ".bmp");
     image.save_image("last.bmp");
 }
