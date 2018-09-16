@@ -118,6 +118,7 @@ public:
         std::uniform_real_distribution<> urd(-100.0f, 100.0f);
 
         vec3 rnd = {urd(gen), urd(gen), urd(gen)};
+        rnd = rnd;
         if (dot(N, rnd) < 0) {
             rnd *= -1;
         }
@@ -140,7 +141,7 @@ public:
 //        ColorMap[ray.getCoords().x][ray.getCoords().y] += result;
 //        ++samplesCount[ray.getCoords().x][ray.getCoords().y];
 
-        ray.reflect(pi + N * EPS, vec3(1), lc);
+        ray.reflect(pi + N * EPS, vec3(0), lc);
         ColorMap[ray.getCoords().x][ray.getCoords().y] += ray.getCol();
         ++samplesCount[ray.getCoords().x][ray.getCoords().y];
         ray.make_invalid();
@@ -276,7 +277,6 @@ int main() {
 
     for (int y = 0; y < H; ++y) {
         for (int x = 0; x < W; ++x) {
-//            cout << "y = " << y << "    x = " << x << endl;
             if (x % 100 == 0)
             for (int i = 0; i < RAYS_PER_PIXEL; ++i) {
                 vec3 dir = vec3((x - W / 2 + urd(gen)) / W,
@@ -285,7 +285,6 @@ int main() {
                 Ray cur = Ray(vec3(0, 0, -20), dir, 0, ivec2(x, y));
                 while (cur.is_valid()) {
                     traceRay(cur, ColorMap, samplesCount, Rays);
-                    cout << cur.getBegin().x << ' ' << cur.getBegin().y << ' ' << cur.getBegin().z << endl;
                 }
             }
         }
