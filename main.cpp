@@ -27,9 +27,10 @@ static const vec3 green(0.3, 1, 0.3);
 
 const int W = 500;
 const int H = 500;
-const int RAYS_PER_PIXEL = 16;
+const int RAYS_PER_PIXEL = 20;
 const int MAX_RAY_REFLECTIONS = 4;
-const float EPS = 1e-4;
+const float EPS = 1e-3;
+const int update_img = 10;
 
 std::default_random_engine generator(time(0));
 std::uniform_int_distribution<int> distribution1(-100, 100);
@@ -44,6 +45,16 @@ float saturate(float x) {
 
 vec3 saturate(vec3 x) {
     return vec3(saturate(x.r), saturate(x.g), saturate(x.b));
+}
+
+float square(vec3 A, vec3 B, vec3 C) {
+    float a = distance(B, C);
+    float b = distance(A, C);
+    float c = distance(B, A);
+    float p = (a + b + c) / 2;
+    float q = std::max(0.f, p * (p - a) * (p - b) * (p - c));
+    return sqrt(q);
+
 }
 
 class Ray {
@@ -87,15 +98,19 @@ public:
     Ray(vec3 i, vec3 j, int k, ivec2 l) :begin(i), dir(normalize(j)), depth(k), coords(l) {}
 };
 
+vec3 vectprod(vec3 a, vec3 b) {
+    return normalize(vec3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x));
+}
+
 class BaseMaterial {
 public:
-    virtual void process(Ray &ray, vec3 pi, vec3 N, vec3 L, float t, vec3 col, vec3 lc, vector<vector<vec3> > &ColorMap, vector<vector<int> > &samplesCount) = 0;
+    virtual void process(Ray &ray, vec3 pi, vec3 N, float t, vec3 col, vec3 lc, vector<vector<vec3> > &ColorMap, vector<vector<int> > &samplesCount) = 0;
     virtual ~BaseMaterial() = default;
 };
 
 class MirrorMaterial : public BaseMaterial {
 public:
-    void process(Ray &ray, vec3 pi, vec3 N, vec3 L, float t, vec3 col, vec3 lc, vector<vector<vec3> > &ColorMap, vector<vector<int> > &samplesCount) {
+    void process(Ray &ray, vec3 pi, vec3 N, float t, vec3 col, vec3 lc, vector<vector<vec3> > &ColorMap, vector<vector<int> > &samplesCount) {
         if (ray.getCol() == black) {
             ray.make_invalid();
         }
@@ -106,23 +121,25 @@ public:
 
 class DiffuseMaterial : public BaseMaterial {
 public:
-    void process(Ray &ray, vec3 pi, vec3 N, vec3 L, float t, vec3 col, vec3 lc, vector<vector<vec3> > &ColorMap, vector<vector<int> > &samplesCount) {
+    void process(Ray &ray, vec3 pi, vec3 N, float t, vec3 col, vec3 lc, vector<vector<vec3> > &ColorMap, vector<vector<int> > &samplesCount) {
         if (ray.getCol() == black) {
             ray.make_invalid();
         }
 
-        vec3 rnd = {distribution1(generator), distribution1(generator), distribution1(generator)};
+        vec3 rnd = normalize(vec3(distribution1(generator), distribution1(generator), distribution1(generator)));
         if (dot(N, rnd) < 0) {
             rnd *= -1;
         }
 
-        ray.reflect(pi + N * EPS, rnd, col);
+        float dt = std::max(0.0f, dot(N, rnd));
+
+        ray.reflect(pi + N * EPS, rnd, col * dt);
     }
 };
 
 class LightMaterial : public BaseMaterial {
 public:
-    void process(Ray &ray, vec3 pi, vec3 N, vec3 L, float t, vec3 col, vec3 lc, vector<vector<vec3> > &ColorMap, vector<vector<int> > &samplesCount) {
+    void process(Ray &ray, vec3 pi, vec3 N, float t, vec3 col, vec3 lc, vector<vector<vec3> > &ColorMap, vector<vector<int> > &samplesCount) {
         ray.make_invalid();
         ray.reflect(pi, pi, col);
         ColorMap[ray.getCoords().x][ray.getCoords().y] += ray.getCol();
@@ -130,110 +147,85 @@ public:
     }
 };
 
-struct Sphere {
-    vec3 c;
-    float r;
-    vec3 col;
-    unique_ptr<BaseMaterial> material;
-    Sphere(vec3 i, float j, vec3 k, unique_ptr<BaseMaterial> &&m){c=i, r=j, col=k, material=move(m);}
-
-    vec3 getNormal(vec3 pi) const {
-        return (pi - c) / r;
-    }
-
-    bool intersect(Ray &ray, float &t) const {
-        vec3 o = ray.getBegin();
-        vec3 d = ray.getDir();
-        vec3 oc = o-c;
-        float b = dot(oc, d);
-        float c = dot(oc, oc) - r*r;
-        float disc = b*b-c;
-        if (disc < 0) {
-            return false;
+bool planeintersect(Ray &ray, float &t, vec3 N, float D) {
+    vec3 o = ray.getBegin();
+    vec3 d = ray.getDir();
+    if (dot(N, d) == 0) {
+        return false;
+    } else {
+        float newT = -((dot(o, N) + D) / dot(d, N));
+        if (t > newT && newT > 0) {
+            t = newT;
+            return true;
         } else {
-            disc = sqrt(disc);
-            float t0 = -b-disc;
-            float t1 = -b+disc;
-            float newT = (t0 > 0) ? t0 :t1;
-            if (t > newT && newT > 0) {
-                t = newT;
-                return true;
-            } else {
-                return false;
-            }
+            return false;
         }
     }
-};
+}
 
-struct Plane {
-    float A, B, C, D;
+struct Triangle {
+    vec3 v0;
+    vec3 v1;
+    vec3 v2;
     vec3 col;
     vec3 N;
+    float D;
     unique_ptr<BaseMaterial> material;
-    Plane(float i, float j, float g, float f, vec3 k, unique_ptr<BaseMaterial> &&m){A=i, B=j, C=g, D=f, col=k,
-                                                                                    material=move(m),
-                                                                                    N=normalize(vec3(A, B, C));}
+    Triangle(vec3 a, vec3 b, vec3 c, vec3 cl, unique_ptr<BaseMaterial> &&m) {
+        v0 = a;
+        v1 = c;
+        v2 = b;
+        col = cl;
+        material=move(m);
+        vec3 e1 = v1 - v0;
+        vec3 e2 = v2 - v0;
+        N = normalize(vectprod(e1, e2));
+        D = N.x * v0.x + N.y * v0.y + N.z * v0.z;
+    }
 
-    vec3 getNormal(vec3 pi) const {
+    vec3 getNormal() const {
         return N;
     }
 
     bool intersect(Ray &ray, float &t) const {
-        vec3 o = ray.getBegin();
-        vec3 d = ray.getDir();
-        if (dot(N, d) == 0) {
+        float newT = INFINITY;
+        if (!planeintersect(ray, newT, N, D)) {
             return false;
-        } else {
-            float newT = -((dot(o, N) + D) / dot(d, N));
-            if (t > newT && newT > 0) {
-                t = newT;
-                return true;
-            } else {
-                return false;
-            }
         }
+
+        vec3 pi = ray.getBegin() + ray.getDir() * newT;
+        float s1 = square(v0, v1, v2), s2 = square(pi, v1, v2), s3 = square(v0, pi, v2), s4 = square(v0, v1, pi);
+        if (abs(s1 - s2 - s3 - s4) > EPS) {
+            return false;
+        }
+        if (ray.getCoords().y < 100) {
+            cout << 1 << endl;
+        }
+        t = newT;
+        return true;
     }
 };
 
 void traceRay(Ray &ray, vector<vector<vec3> > &ColorMap, vector<vector<int> > &samplesCount) {
 
 
-    const int spheres_count = 4;
-    const int planes_count = 1;
-    static const Sphere spheres[spheres_count] = {Sphere(vec3(-11,7,20),5, red, make_unique<DiffuseMaterial>()),
-                                      Sphere(vec3(0,0,35),5,blue, make_unique<MirrorMaterial>()),
-                                      Sphere(vec3(11,0,25),5, violet, make_unique<DiffuseMaterial>()),
-                                      Sphere(vec3(0,5,5),2, white, make_unique<LightMaterial>())};
+    const int triangles_count = 1;
+    static const Triangle triangles[triangles_count] = {Triangle(vec3(-5, 0, 0), vec3(5, 0, 0), vec3(0, 5, 0), white, make_unique<LightMaterial>())};
 
-    static const Plane planes[planes_count] = {Plane(0, 0, -1, 40, green, make_unique<DiffuseMaterial>())};
 
     vec3 result = black;
 
     float t = INFINITY;
-    int i = 0, cur=-1, type=0;
-    for (i = 0; i < spheres_count; ++i) {
-        if (spheres[i].intersect(ray, t)) {
+    int i = 0, cur=-1;
+    for (i = 0; i < triangles_count; ++i) {
+        if (triangles[i].intersect(ray, t)) {
             cur = i;
-            type = 1;
         }
     }
-    for (i = 0; i < planes_count; ++i) {
-        if (planes[i].intersect(ray, t)) {
-            cur = i;
-            type = 2;
-        }
-    }
-
-    if (type == 1) {
+    if (cur > -1) {
         vec3 pi = ray.getBegin() + ray.getDir() * t;
-        vec3 N = spheres[cur].getNormal(pi);
-        vec3 L = spheres[3].c - pi;
-        spheres[cur].material->process(ray, pi, N, L, t, spheres[cur].col, spheres[3].col, ColorMap, samplesCount);
-    } else if (type == 2) {
-        vec3 pi = ray.getBegin() + ray.getDir() * t;
-        vec3 N = planes[cur].getNormal(pi);
-        vec3 L = spheres[3].c - pi;
-        planes[cur].material->process(ray, pi, N, L, t, planes[cur].col, spheres[3].col, ColorMap, samplesCount);
+        vec3 N = triangles[cur].getNormal();
+        triangles[cur].material->process(ray, pi, N, t, triangles[cur].col, triangles[3].col, ColorMap, samplesCount);
     } else {
         ray.make_invalid();
     }
@@ -249,14 +241,12 @@ int main() {
 
     bitmap_image image(H, W);
 
-    deque<Ray> Rays;
-
     image.clear();
 
 
-    for (int y = 0; y < H; ++y) {
-        for (int x = 0; x < W; ++x) {
-            for (int i = 0; i < RAYS_PER_PIXEL; ++i) {
+    for (int i = 0; i < RAYS_PER_PIXEL; ++i) {
+        for (int y = 0; y < H; ++y) {
+            for (int x = 0; x < W; ++x) {
                 vec3 dir = vec3((x - W / 2 + distribution2(generator)) / W,
                                 -(y - H / 2 + distribution2(generator)) / H,
                                 1);
@@ -264,12 +254,22 @@ int main() {
                 while (ray.is_valid()) {
                     traceRay(ray, ColorMap, samplesCount);
                 }
+//                if ((i + 1) % update_img == 0) {
+//                    vec3 c = ColorMap[x][y] / static_cast<float>(samplesCount[x][y]) * 255.0f;
+//                    image.set_pixel(x, y, c.r, c.g, c.b);
+//                }
             }
         }
+//        if ((i + 1) % update_img == 0) {
+//            image.save_image("last.bmp");
+//        }
     }
 
-    for (int x = 0; x < W; ++x) {
-        for (int y = 0; y < H; ++y) {
+    for (int y = 0; y < H; ++y) {
+        for (int x = 0; x < W; ++x) {
+            if (!samplesCount[x][y]) {
+                continue;
+            }
             vec3 c = ColorMap[x][y] / static_cast<float>(samplesCount[x][y]) * 255.0f;
             image.set_pixel(x, y, c.r, c.g, c.b);
         }
