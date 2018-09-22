@@ -29,7 +29,7 @@ const int W = 500;
 const int H = 500;
 const int RAYS_PER_PIXEL = 20;
 const int MAX_RAY_REFLECTIONS = 4;
-const float EPS = 1e-3;
+const float EPS = 1e-6;
 const int update_img = 10;
 
 std::default_random_engine generator(time(0));
@@ -47,14 +47,15 @@ vec3 saturate(vec3 x) {
     return vec3(saturate(x.r), saturate(x.g), saturate(x.b));
 }
 
-float square(vec3 A, vec3 B, vec3 C) {
-    float a = distance(B, C);
-    float b = distance(A, C);
-    float c = distance(B, A);
-    float p = (a + b + c) / 2;
-    float q = std::max(0.f, p * (p - a) * (p - b) * (p - c));
-    return sqrt(q);
+vec3 vectprod(vec3 a, vec3 b) {
+    return vec3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
+}
 
+float square(vec3 A, vec3 B, vec3 C) {
+    vec3 a = B - A;
+    vec3 b = C - A;
+    vec3 c = vectprod(a, b);
+    return sqrt(c.x * c.x + c.y * c.y + c.z * c.z) / 2;
 }
 
 class Ray {
@@ -98,9 +99,7 @@ public:
     Ray(vec3 i, vec3 j, int k, ivec2 l) :begin(i), dir(normalize(j)), depth(k), coords(l) {}
 };
 
-vec3 vectprod(vec3 a, vec3 b) {
-    return normalize(vec3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x));
-}
+
 
 class BaseMaterial {
 public:
