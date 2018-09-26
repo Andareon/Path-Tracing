@@ -29,14 +29,6 @@ std::uniform_real_distribution<> distribution(-0.5f, 0.5f);
 class Ray;
 void traceRay(Ray &ray, vector<vector<vec3> > &ColorMap, vector<vector<int> > &samplesCount);
 
-float saturate(float x) {
-    return std::max(std::min(1.0f, x), 0.0f);
-}
-
-vec3 saturate(vec3 x) {
-    return vec3(saturate(x.r), saturate(x.g), saturate(x.b));
-}
-
 float square(vec3 A, vec3 B, vec3 C) {
     vec3 a = B - A;
     vec3 b = C - A;
@@ -160,7 +152,7 @@ struct Triangle {
         vec3 e1 = v1 - v0;
         vec3 e2 = v2 - v0;
         N = normalize(cross(e1, e2));
-        D = N.x * v0.x + N.y * v0.y + N.z * v0.z;
+        D = dot(N, v0);
     }
 
     vec3 getNormal() const {
