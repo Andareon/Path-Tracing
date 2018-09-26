@@ -1,14 +1,6 @@
-#include <deque>
-#include <cmath>
-#include <cstdlib>
-#include <fstream>
 #include <memory>
-#include <string>
-#include <vector>
-#include <ctime>
-#include <string>
-#include <assert.h>
 #include <random>
+#include <time.h>
 
 #include "bitmap_image.hpp"
 #include "glm/geometric.hpp"
