@@ -19,7 +19,7 @@ static const vec3 green(0.3, 1, 0.3);
 
 const int W = 500;
 const int H = 500;
-const int RAYS_PER_PIXEL = 20;
+const int RAYS_PER_PIXEL = 200;
 const int MAX_RAY_REFLECTIONS = 4;
 const float EPS = 1e-6;
 
@@ -185,19 +185,43 @@ struct Triangle {
 
 void traceRay(Ray &ray, vector<vector<vec3> > &ColorMap, vector<vector<int> > &SamplesCount) {
 
-    float cube_a = 4;
-    const int triangles_count = 4;
+    float cube_a = 10;
+    const int triangles_count = 12;
     static const Triangle triangles[triangles_count] = {Triangle(vec3(-cube_a, cube_a, cube_a), vec3(cube_a, cube_a, cube_a),
-                                                        vec3(cube_a, -cube_a, cube_a), violet, make_unique<LightMaterial>(ColorMap, SamplesCount)),
+                                                        vec3(cube_a, -cube_a, cube_a), violet, make_unique<DiffuseMaterial>()),
 
                                                         Triangle(vec3(-cube_a, cube_a, cube_a), vec3(cube_a, -cube_a, cube_a),
-                                                        vec3(-cube_a, -cube_a, cube_a), red, make_unique<LightMaterial>(ColorMap, SamplesCount)),
+                                                        vec3(-cube_a, -cube_a, cube_a), violet, make_unique<DiffuseMaterial>()),
 
                                                         Triangle(vec3(-cube_a, cube_a, -cube_a), vec3(-cube_a, cube_a, cube_a),
-                                                        vec3(-cube_a, -cube_a, cube_a), blue, make_unique<LightMaterial>(ColorMap, SamplesCount)),
+                                                        vec3(-cube_a, -cube_a, cube_a), blue, make_unique<DiffuseMaterial>()),
 
                                                         Triangle(vec3(-cube_a, cube_a, -cube_a), vec3(-cube_a, -cube_a, cube_a),
-                                                        vec3(-cube_a, -cube_a, -cube_a), green, make_unique<LightMaterial>(ColorMap, SamplesCount))};
+                                                        vec3(-cube_a, -cube_a, -cube_a), blue, make_unique<DiffuseMaterial>()),
+
+                                                        Triangle(vec3(cube_a, cube_a, -cube_a), vec3(cube_a, -cube_a, cube_a),
+                                                        vec3(cube_a, cube_a, cube_a), yellow, make_unique<DiffuseMaterial>()),
+
+                                                        Triangle(vec3(cube_a, cube_a, -cube_a), vec3(cube_a, -cube_a, -cube_a),
+                                                        vec3(cube_a, -cube_a, cube_a), yellow, make_unique<DiffuseMaterial>()),
+
+                                                        Triangle(vec3(-cube_a, cube_a, cube_a), vec3(cube_a, cube_a, -cube_a),
+                                                        vec3(cube_a, cube_a, cube_a), green, make_unique<DiffuseMaterial>()),
+
+                                                        Triangle(vec3(-cube_a, cube_a, cube_a), vec3(-cube_a, cube_a, -cube_a),
+                                                        vec3(cube_a, cube_a, -cube_a), green, make_unique<DiffuseMaterial>()),
+
+                                                        Triangle(vec3(-cube_a, -cube_a, cube_a), vec3(cube_a, -cube_a, cube_a),
+                                                        vec3(cube_a, -cube_a, -cube_a), red, make_unique<DiffuseMaterial>()),
+
+                                                        Triangle(vec3(-cube_a, -cube_a, cube_a), vec3(cube_a, -cube_a, -cube_a),
+                                                        vec3(-cube_a, -cube_a, -cube_a), red, make_unique<DiffuseMaterial>()),
+
+                                                        Triangle(vec3(-1, cube_a - 1, 1), vec3(1, cube_a - 1, 1),
+                                                        vec3(1, cube_a - 1, -1), white, make_unique<LightMaterial>(ColorMap, SamplesCount)),
+
+                                                        Triangle(vec3(-1, cube_a - 1, 1), vec3(1, cube_a - 1, -1),
+                                                        vec3(-1, cube_a - 1, -1), white, make_unique<LightMaterial>(ColorMap, SamplesCount))};
 
 
     vec3 result = black;
