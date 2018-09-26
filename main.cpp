@@ -47,14 +47,10 @@ vec3 saturate(vec3 x) {
     return vec3(saturate(x.r), saturate(x.g), saturate(x.b));
 }
 
-vec3 vectprod(vec3 a, vec3 b) {
-    return vec3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
-}
-
 float square(vec3 A, vec3 B, vec3 C) {
     vec3 a = B - A;
     vec3 b = C - A;
-    vec3 c = vectprod(a, b);
+    vec3 c = cross(a, b);
     return sqrt(c.x * c.x + c.y * c.y + c.z * c.z) / 2;
 }
 
@@ -178,7 +174,7 @@ struct Triangle {
         material=move(m);
         vec3 e1 = v1 - v0;
         vec3 e2 = v2 - v0;
-        N = normalize(vectprod(e1, e2));
+        N = normalize(cross(e1, e2));
         D = N.x * v0.x + N.y * v0.y + N.z * v0.z;
     }
 
@@ -207,9 +203,16 @@ struct Triangle {
 
 void traceRay(Ray &ray, vector<vector<vec3> > &ColorMap, vector<vector<int> > &samplesCount) {
 
+    float cube_a = 4;
+    const int triangles_count = 3;
+    static const Triangle triangles[triangles_count] = {Triangle(vec3(-cube_a, cube_a, 0), vec3(cube_a, cube_a, 0),
+                                                        vec3(cube_a, -cube_a, 0), violet, make_unique<LightMaterial>()),
 
-    const int triangles_count = 1;
-    static const Triangle triangles[triangles_count] = {Triangle(vec3(-5, 0, 0), vec3(5, 0, 0), vec3(0, 5, 0), white, make_unique<LightMaterial>())};
+                                                        Triangle(vec3(-cube_a, cube_a, 0), vec3(cube_a, -cube_a, 0),
+                                                        vec3(-cube_a, -cube_a, 0), blue, make_unique<LightMaterial>()),
+
+                                                        Triangle(vec3(-cube_a, cube_a, -cube_a), vec3(-cube_a, cube_a, cube_a),
+                                                        vec3(-cube_a, -cube_a, cube_a), red, make_unique<LightMaterial>())};
 
 
     vec3 result = black;
