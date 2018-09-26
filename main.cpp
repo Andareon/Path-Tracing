@@ -152,7 +152,7 @@ struct Triangle {
         vec3 e1 = v1 - v0;
         vec3 e2 = v2 - v0;
         N = normalize(cross(e1, e2));
-        D = dot(N, v0);
+        D = -dot(N, v0);
     }
 
     vec3 getNormal() const {
@@ -166,7 +166,10 @@ struct Triangle {
         }
 
         vec3 pi = ray.getBegin() + ray.getDir() * newT;
-        float s1 = square(v0, v1, v2), s2 = square(pi, v1, v2), s3 = square(v0, pi, v2), s4 = square(v0, v1, pi);
+        float s1 = square(v0, v1, v2);
+        float s2 = square(pi, v1, v2);
+        float s3 = square(v0, pi, v2);
+        float s4 = square(v0, v1, pi);
         if (abs(s1 - s2 - s3 - s4) > EPS) {
             return false;
         }
@@ -180,12 +183,18 @@ struct Triangle {
 void traceRay(Ray &ray, vector<vector<vec3> > &ColorMap, vector<vector<int> > &samplesCount) {
 
     float cube_a = 4;
-    const int triangles_count = 2;
-    static const Triangle triangles[triangles_count] = {Triangle(vec3(-cube_a, cube_a, 0), vec3(cube_a, cube_a, 0),
-                                                        vec3(cube_a, -cube_a, 0), violet, make_unique<LightMaterial>()),
+    const int triangles_count = 4;
+    static const Triangle triangles[triangles_count] = {Triangle(vec3(-cube_a, cube_a, cube_a), vec3(cube_a, cube_a, cube_a),
+                                                        vec3(cube_a, -cube_a, cube_a), violet, make_unique<LightMaterial>()),
 
-                                                        Triangle(vec3(-cube_a, cube_a, 0), vec3(cube_a, -cube_a, 0),
-                                                        vec3(-cube_a, -cube_a, 0), blue, make_unique<LightMaterial>())};
+                                                        Triangle(vec3(-cube_a, cube_a, cube_a), vec3(cube_a, -cube_a, cube_a),
+                                                        vec3(-cube_a, -cube_a, cube_a), red, make_unique<LightMaterial>()),
+
+                                                        Triangle(vec3(-cube_a, cube_a, -cube_a), vec3(-cube_a, cube_a, cube_a),
+                                                        vec3(-cube_a, -cube_a, cube_a), blue, make_unique<LightMaterial>()),
+
+                                                        Triangle(vec3(-cube_a, cube_a, -cube_a), vec3(-cube_a, -cube_a, cube_a),
+                                                        vec3(-cube_a, -cube_a, -cube_a), green, make_unique<LightMaterial>())};
 
 
     vec3 result = black;
