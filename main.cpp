@@ -1,6 +1,6 @@
 #include <memory>
 #include <random>
-#include <time.h>
+#include <ctime>
 
 #include "bitmap_image.hpp"
 #include "glm/geometric.hpp"
@@ -19,7 +19,7 @@ static const vec3 green(0.3, 1, 0.3);
 
 const int W = 500;
 const int H = 500;
-const int RAYS_PER_PIXEL = 200;
+const int RAYS_PER_PIXEL = 20;
 const int MAX_RAY_REFLECTIONS = 4;
 const float EPS = 1e-6;
 
@@ -81,13 +81,13 @@ public:
 
 class BaseMaterial {
 public:
-    virtual void process(Ray &ray, vec3 pi, vec3 N, float t, vec3 col, vec3 lc) = 0;
+    virtual void process(Ray &ray, vec3 pi, vec3 N, vec3 col, vec3 lc) = 0;
     virtual ~BaseMaterial() = default;
 };
 
 class MirrorMaterial : public BaseMaterial {
 public:
-    void process(Ray &ray, vec3 pi, vec3 N, float t, vec3 col, vec3 lc) {
+    void process(Ray &ray, vec3 pi, vec3 N, vec3 col, vec3 lc) {
         if (ray.getCol() == black) {
             ray.make_invalid();
         }
@@ -98,7 +98,7 @@ public:
 
 class DiffuseMaterial : public BaseMaterial {
 public:
-    void process(Ray &ray, vec3 pi, vec3 N, float t, vec3 col, vec3 lc) {
+    void process(Ray &ray, vec3 pi, vec3 N, vec3 col, vec3 lc) {
         if (ray.getCol() == black) {
             ray.make_invalid();
         }
@@ -119,7 +119,7 @@ public:
     vector<vector<vec3> > &ColorMap;
     vector<vector<int> > &SamplesCount;
     LightMaterial(vector<vector<vec3> > &CM, vector<vector<int> > &SC) :ColorMap(CM), SamplesCount(SC) {};
-    void process(Ray &ray, vec3 pi, vec3 N, float t, vec3 col, vec3 lc) {
+    void process(Ray &ray, vec3 pi, vec3 N, vec3 col, vec3 lc) {
         ray.make_invalid();
         ray.reflect(pi, pi, col);
         ColorMap[ray.getCoords().x][ray.getCoords().y] += ray.getCol();
@@ -236,7 +236,7 @@ void traceRay(Ray &ray, vector<vector<vec3> > &ColorMap, vector<vector<int> > &S
     if (cur > -1) {
         vec3 pi = ray.getBegin() + ray.getDir() * t;
         vec3 N = triangles[cur].getNormal();
-        triangles[cur].material->process(ray, pi, N, t, triangles[cur].col, triangles[3].col);
+        triangles[cur].material->process(ray, pi, N, triangles[cur].col, triangles[3].col);
     } else {
         ray.make_invalid();
     }
