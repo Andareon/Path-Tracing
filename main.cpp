@@ -27,7 +27,7 @@ std::default_random_engine generator(time(0));
 std::uniform_real_distribution<> distribution(-0.5f, 0.5f);
 
 class Ray;
-void traceRay(Ray &ray, vector<vector<vec3> > &ColorMap, vector<vector<int> > &samplesCount);
+void traceRay(Ray &ray, vector<vector<vec3> > &ColorMap, vector<vector<int> > &SamplesCount);
 
 float square(vec3 A, vec3 B, vec3 C) {
     vec3 a = B - A;
@@ -81,13 +81,13 @@ public:
 
 class BaseMaterial {
 public:
-    virtual void process(Ray &ray, vec3 pi, vec3 N, float t, vec3 col, vec3 lc, vector<vector<vec3> > &ColorMap, vector<vector<int> > &samplesCount) = 0;
+    virtual void process(Ray &ray, vec3 pi, vec3 N, float t, vec3 col, vec3 lc) = 0;
     virtual ~BaseMaterial() = default;
 };
 
 class MirrorMaterial : public BaseMaterial {
 public:
-    void process(Ray &ray, vec3 pi, vec3 N, float t, vec3 col, vec3 lc, vector<vector<vec3> > &ColorMap, vector<vector<int> > &samplesCount) {
+    void process(Ray &ray, vec3 pi, vec3 N, float t, vec3 col, vec3 lc) {
         if (ray.getCol() == black) {
             ray.make_invalid();
         }
@@ -98,7 +98,7 @@ public:
 
 class DiffuseMaterial : public BaseMaterial {
 public:
-    void process(Ray &ray, vec3 pi, vec3 N, float t, vec3 col, vec3 lc, vector<vector<vec3> > &ColorMap, vector<vector<int> > &samplesCount) {
+    void process(Ray &ray, vec3 pi, vec3 N, float t, vec3 col, vec3 lc) {
         if (ray.getCol() == black) {
             ray.make_invalid();
         }
@@ -116,11 +116,14 @@ public:
 
 class LightMaterial : public BaseMaterial {
 public:
-    void process(Ray &ray, vec3 pi, vec3 N, float t, vec3 col, vec3 lc, vector<vector<vec3> > &ColorMap, vector<vector<int> > &samplesCount) {
+    vector<vector<vec3> > &ColorMap;
+    vector<vector<int> > &SamplesCount;
+    LightMaterial(vector<vector<vec3> > &CM, vector<vector<int> > &SC) :ColorMap(CM), SamplesCount(SC) {};
+    void process(Ray &ray, vec3 pi, vec3 N, float t, vec3 col, vec3 lc) {
         ray.make_invalid();
         ray.reflect(pi, pi, col);
         ColorMap[ray.getCoords().x][ray.getCoords().y] += ray.getCol();
-        ++samplesCount[ray.getCoords().x][ray.getCoords().y];
+        ++SamplesCount[ray.getCoords().x][ray.getCoords().y];
     }
 };
 
@@ -180,21 +183,21 @@ struct Triangle {
     }
 };
 
-void traceRay(Ray &ray, vector<vector<vec3> > &ColorMap, vector<vector<int> > &samplesCount) {
+void traceRay(Ray &ray, vector<vector<vec3> > &ColorMap, vector<vector<int> > &SamplesCount) {
 
     float cube_a = 4;
     const int triangles_count = 4;
     static const Triangle triangles[triangles_count] = {Triangle(vec3(-cube_a, cube_a, cube_a), vec3(cube_a, cube_a, cube_a),
-                                                        vec3(cube_a, -cube_a, cube_a), violet, make_unique<LightMaterial>()),
+                                                        vec3(cube_a, -cube_a, cube_a), violet, make_unique<LightMaterial>(ColorMap, SamplesCount)),
 
                                                         Triangle(vec3(-cube_a, cube_a, cube_a), vec3(cube_a, -cube_a, cube_a),
-                                                        vec3(-cube_a, -cube_a, cube_a), red, make_unique<LightMaterial>()),
+                                                        vec3(-cube_a, -cube_a, cube_a), red, make_unique<LightMaterial>(ColorMap, SamplesCount)),
 
                                                         Triangle(vec3(-cube_a, cube_a, -cube_a), vec3(-cube_a, cube_a, cube_a),
-                                                        vec3(-cube_a, -cube_a, cube_a), blue, make_unique<LightMaterial>()),
+                                                        vec3(-cube_a, -cube_a, cube_a), blue, make_unique<LightMaterial>(ColorMap, SamplesCount)),
 
                                                         Triangle(vec3(-cube_a, cube_a, -cube_a), vec3(-cube_a, -cube_a, cube_a),
-                                                        vec3(-cube_a, -cube_a, -cube_a), green, make_unique<LightMaterial>())};
+                                                        vec3(-cube_a, -cube_a, -cube_a), green, make_unique<LightMaterial>(ColorMap, SamplesCount))};
 
 
     vec3 result = black;
@@ -209,7 +212,7 @@ void traceRay(Ray &ray, vector<vector<vec3> > &ColorMap, vector<vector<int> > &s
     if (cur > -1) {
         vec3 pi = ray.getBegin() + ray.getDir() * t;
         vec3 N = triangles[cur].getNormal();
-        triangles[cur].material->process(ray, pi, N, t, triangles[cur].col, triangles[3].col, ColorMap, samplesCount);
+        triangles[cur].material->process(ray, pi, N, t, triangles[cur].col, triangles[3].col);
     } else {
         ray.make_invalid();
     }
@@ -221,7 +224,7 @@ int main() {
     unsigned int start_time = clock();
 
     vector<vector<vec3> > ColorMap(W, vector<vec3>(H, vec3(0)));
-    vector<vector<int> > samplesCount(W, vector<int>(H, 0));
+    vector<vector<int> > SamplesCount(W, vector<int>(H, 0));
 
     bitmap_image image(H, W);
 
@@ -236,7 +239,7 @@ int main() {
                                 1);
                 Ray ray = Ray(vec3(0, 0, -20), dir, 0, ivec2(x, y));
                 while (ray.is_valid()) {
-                    traceRay(ray, ColorMap, samplesCount);
+                    traceRay(ray, ColorMap, SamplesCount);
                 }
             }
         }
@@ -244,10 +247,10 @@ int main() {
 
     for (int y = 0; y < H; ++y) {
         for (int x = 0; x < W; ++x) {
-            if (!samplesCount[x][y]) {
+            if (!SamplesCount[x][y]) {
                 continue;
             }
-            vec3 c = ColorMap[x][y] / static_cast<float>(samplesCount[x][y]) * 255.0f;
+            vec3 c = ColorMap[x][y] / static_cast<float>(SamplesCount[x][y]) * 255.0f;
             image.set_pixel(x, y, c.r, c.g, c.b);
         }
     }
