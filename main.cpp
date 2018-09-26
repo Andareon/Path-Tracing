@@ -30,11 +30,9 @@ const int H = 500;
 const int RAYS_PER_PIXEL = 20;
 const int MAX_RAY_REFLECTIONS = 4;
 const float EPS = 1e-6;
-const int update_img = 10;
 
 std::default_random_engine generator(time(0));
-std::uniform_int_distribution<int> distribution1(-100, 100);
-std::uniform_real_distribution<> distribution2(-0.5f, 0.5f);
+std::uniform_real_distribution<> distribution(-0.5f, 0.5f);
 
 class Ray;
 void traceRay(Ray &ray, vector<vector<vec3> > &ColorMap, vector<vector<int> > &samplesCount);
@@ -121,7 +119,7 @@ public:
             ray.make_invalid();
         }
 
-        vec3 rnd = normalize(vec3(distribution1(generator), distribution1(generator), distribution1(generator)));
+        vec3 rnd = normalize(vec3(round(distribution(generator) * 200), round(distribution(generator) * 200), round(distribution(generator) * 200)));
         if (dot(N, rnd) < 0) {
             rnd *= -1;
         }
@@ -240,22 +238,15 @@ int main() {
     for (int i = 0; i < RAYS_PER_PIXEL; ++i) {
         for (int y = 0; y < H; ++y) {
             for (int x = 0; x < W; ++x) {
-                vec3 dir = vec3((x - W / 2 + distribution2(generator)) / W,
-                                -(y - H / 2 + distribution2(generator)) / H,
+                vec3 dir = vec3((x - W / 2 + distribution(generator)) / W,
+                                -(y - H / 2 + distribution(generator)) / H,
                                 1);
                 Ray ray = Ray(vec3(0, 0, -20), dir, 0, ivec2(x, y));
                 while (ray.is_valid()) {
                     traceRay(ray, ColorMap, samplesCount);
                 }
-//                if ((i + 1) % update_img == 0) {
-//                    vec3 c = ColorMap[x][y] / static_cast<float>(samplesCount[x][y]) * 255.0f;
-//                    image.set_pixel(x, y, c.r, c.g, c.b);
-//                }
             }
         }
-//        if ((i + 1) % update_img == 0) {
-//            image.save_image("last.bmp");
-//        }
     }
 
     for (int y = 0; y < H; ++y) {
