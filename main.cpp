@@ -108,7 +108,7 @@ public:
             return;
         }
 
-        vec3 rnd = normalize(vec3(round(distribution(generator) * 200), round(distribution(generator) * 200), round(distribution(generator) * 200)));
+        vec3 rnd = normalize(vec3(distribution(generator), distribution(generator), distribution(generator)));
         if (dot(N, rnd) < 0) {
             rnd *= -1;
         }
