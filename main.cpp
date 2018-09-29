@@ -147,17 +147,15 @@ bool planeintersect(Ray &ray, float &t, vec3 N, float D) {
 }
 
 struct Triangle {
-    vec3 v0;
-    vec3 v1;
-    vec3 v2;
+    std::array<vec3, 3> vertices;
     vec3 N;
     float D;
     unique_ptr<BaseMaterial> material;
-    Triangle(vec3 a, vec3 b, vec3 c, unique_ptr<BaseMaterial> &&m): v0(a), v1(b), v2(c), material(move(m)) {
-        vec3 e1 = v1 - v0;
-        vec3 e2 = v2 - v0;
+    Triangle(std::array<vec3, 3> a, unique_ptr<BaseMaterial> &&m): vertices(a), material(move(m)) {
+        vec3 e1 = vertices[1] - vertices[0];
+        vec3 e2 = vertices[2] - vertices[0];
         N = normalize(cross(e1, e2));
-        D = -dot(N, v0);
+        D = -dot(N, vertices[0]);
     }
 
     vec3 getNormal() const {
@@ -171,10 +169,10 @@ struct Triangle {
         }
 
         vec3 pi = ray.getBegin() + ray.getDir() * newT;
-        float full_square = square(v0, v1, v2);
-        float small_square_1 = square(pi, v1, v2);
-        float small_square_2 = square(v0, pi, v2);
-        float small_square_3 = square(v0, v1, pi);
+        float full_square = square(vertices[0], vertices[1], vertices[2]);
+        float small_square_1 = square(pi, vertices[1], vertices[2]);
+        float small_square_2 = square(vertices[0], pi, vertices[2]);
+        float small_square_3 = square(vertices[0], vertices[1], pi);
         if (abs(full_square - small_square_1 - small_square_2 - small_square_3) > EPS) {
             return false;
         }
@@ -215,41 +213,41 @@ int main() {
 
     float cube_a = 10;
     const int triangles_count = 12;
-    const array<Triangle, triangles_count> triangles = {Triangle(vec3(-cube_a, cube_a, cube_a), vec3(cube_a, cube_a, cube_a),
-                                                                 vec3(cube_a, -cube_a, cube_a), make_unique<DiffuseMaterial>(white)),
+    const array<Triangle, triangles_count> triangles = {Triangle({vec3(-cube_a, cube_a, cube_a), vec3(cube_a, cube_a, cube_a),
+                                                                 vec3(cube_a, -cube_a, cube_a)}, make_unique<DiffuseMaterial>(white)),
 
-                                                        Triangle(vec3(-cube_a, cube_a, cube_a), vec3(cube_a, -cube_a, cube_a),
-                                                                 vec3(-cube_a, -cube_a, cube_a), make_unique<DiffuseMaterial>(white)),
+                                                        Triangle({vec3(-cube_a, cube_a, cube_a), vec3(cube_a, -cube_a, cube_a),
+                                                                 vec3(-cube_a, -cube_a, cube_a)}, make_unique<DiffuseMaterial>(white)),
 
-                                                        Triangle(vec3(-cube_a, cube_a, -cube_a), vec3(-cube_a, cube_a, cube_a),
-                                                                 vec3(-cube_a, -cube_a, cube_a), make_unique<DiffuseMaterial>(red)),
+                                                        Triangle({vec3(-cube_a, cube_a, -cube_a), vec3(-cube_a, cube_a, cube_a),
+                                                                 vec3(-cube_a, -cube_a, cube_a)}, make_unique<DiffuseMaterial>(red)),
 
-                                                        Triangle(vec3(-cube_a, cube_a, -cube_a), vec3(-cube_a, -cube_a, cube_a),
-                                                                 vec3(-cube_a, -cube_a, -cube_a), make_unique<DiffuseMaterial>(red)),
+                                                        Triangle({vec3(-cube_a, cube_a, -cube_a), vec3(-cube_a, -cube_a, cube_a),
+                                                                 vec3(-cube_a, -cube_a, -cube_a)}, make_unique<DiffuseMaterial>(red)),
 
-                                                        Triangle(vec3(cube_a, cube_a, -cube_a), vec3(cube_a, -cube_a, cube_a),
-                                                                 vec3(cube_a, cube_a, cube_a), make_unique<DiffuseMaterial>(green)),
+                                                        Triangle({vec3(cube_a, cube_a, -cube_a), vec3(cube_a, -cube_a, cube_a),
+                                                                 vec3(cube_a, cube_a, cube_a)}, make_unique<DiffuseMaterial>(green)),
 
-                                                        Triangle(vec3(cube_a, cube_a, -cube_a), vec3(cube_a, -cube_a, -cube_a),
-                                                                 vec3(cube_a, -cube_a, cube_a), make_unique<DiffuseMaterial>(green)),
+                                                        Triangle({vec3(cube_a, cube_a, -cube_a), vec3(cube_a, -cube_a, -cube_a),
+                                                                 vec3(cube_a, -cube_a, cube_a)}, make_unique<DiffuseMaterial>(green)),
 
-                                                        Triangle(vec3(-cube_a, cube_a, cube_a), vec3(cube_a, cube_a, -cube_a),
-                                                                 vec3(cube_a, cube_a, cube_a), make_unique<DiffuseMaterial>(white)),
+                                                        Triangle({vec3(-cube_a, cube_a, cube_a), vec3(cube_a, cube_a, -cube_a),
+                                                                 vec3(cube_a, cube_a, cube_a)}, make_unique<DiffuseMaterial>(white)),
 
-                                                        Triangle(vec3(-cube_a, cube_a, cube_a), vec3(-cube_a, cube_a, -cube_a),
-                                                                 vec3(cube_a, cube_a, -cube_a), make_unique<DiffuseMaterial>(white)),
+                                                        Triangle({vec3(-cube_a, cube_a, cube_a), vec3(-cube_a, cube_a, -cube_a),
+                                                                 vec3(cube_a, cube_a, -cube_a)}, make_unique<DiffuseMaterial>(white)),
 
-                                                        Triangle(vec3(-cube_a, -cube_a, cube_a), vec3(cube_a, -cube_a, cube_a),
-                                                                 vec3(cube_a, -cube_a, -cube_a), make_unique<DiffuseMaterial>(white)),
+                                                        Triangle({vec3(-cube_a, -cube_a, cube_a), vec3(cube_a, -cube_a, cube_a),
+                                                                 vec3(cube_a, -cube_a, -cube_a)}, make_unique<DiffuseMaterial>(white)),
 
-                                                        Triangle(vec3(-cube_a, -cube_a, cube_a), vec3(cube_a, -cube_a, -cube_a),
-                                                                 vec3(-cube_a, -cube_a, -cube_a), make_unique<DiffuseMaterial>(white)),
+                                                        Triangle({vec3(-cube_a, -cube_a, cube_a), vec3(cube_a, -cube_a, -cube_a),
+                                                                 vec3(-cube_a, -cube_a, -cube_a)}, make_unique<DiffuseMaterial>(white)),
 
-                                                        Triangle(vec3(-2, cube_a - 1, 2), vec3(2, cube_a - 1, 2),
-                                                                 vec3(2, cube_a - 1, -2), make_unique<LightMaterial>(ColorMap, SamplesCount, white)),
+                                                        Triangle({vec3(-2, cube_a - 1, 2), vec3(2, cube_a - 1, 2),
+                                                                 vec3(2, cube_a - 1, -2)}, make_unique<LightMaterial>(ColorMap, SamplesCount, white)),
 
-                                                        Triangle(vec3(-2, cube_a - 1, 2), vec3(2, cube_a - 1, -2),
-                                                                 vec3(-2, cube_a - 1, -2), make_unique<LightMaterial>(ColorMap, SamplesCount, white))};
+                                                        Triangle({vec3(-2, cube_a - 1, 2), vec3(2, cube_a - 1, -2),
+                                                                 vec3(-2, cube_a - 1, -2)}, make_unique<LightMaterial>(ColorMap, SamplesCount, white))};
 
 
 
