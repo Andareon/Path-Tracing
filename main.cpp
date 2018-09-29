@@ -133,7 +133,7 @@ public:
 bool planeintersect(Ray &ray, float &t, vec3 N, float D) {
     vec3 o = ray.getBegin();
     vec3 d = ray.getDir();
-    if (std::abs(dot(N, d)) < 1e-9) {
+    if (std::abs(dot(N, d)) < EPS) {
         return false;
     } else {
         float newT = -(dot(o, N) + D) / dot(d, N);
