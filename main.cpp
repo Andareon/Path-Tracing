@@ -171,11 +171,11 @@ struct Triangle {
         }
 
         vec3 pi = ray.getBegin() + ray.getDir() * newT;
-        float s1 = square(v0, v1, v2);
-        float s2 = square(pi, v1, v2);
-        float s3 = square(v0, pi, v2);
-        float s4 = square(v0, v1, pi);
-        if (abs(s1 - s2 - s3 - s4) > EPS) {
+        float full_square = square(v0, v1, v2);
+        float small_square_1 = square(pi, v1, v2);
+        float small_square_2 = square(v0, pi, v2);
+        float small_square_3 = square(v0, v1, pi);
+        if (abs(full_square - small_square_1 - small_square_2 - small_square_3) > EPS) {
             return false;
         }
         if (newT < t) {
