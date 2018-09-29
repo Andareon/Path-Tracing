@@ -27,7 +27,6 @@ std::default_random_engine generator(time(0));
 std::uniform_real_distribution<> distribution(-0.5f, 0.5f);
 
 class Ray;
-void traceRay(Ray &ray, vector<vector<vec3> > &ColorMap, vector<vector<int> > &SamplesCount);
 
 float square(vec3 A, vec3 B, vec3 C) {
     vec3 a = B - A;
@@ -186,50 +185,10 @@ struct Triangle {
     }
 };
 
-void traceRay(Ray &ray, vector<vector<vec3> > &ColorMap, vector<vector<int> > &SamplesCount) {
-
-    float cube_a = 10;
-    const int triangles_count = 12;
-    static const Triangle triangles[triangles_count] = {Triangle(vec3(-cube_a, cube_a, cube_a), vec3(cube_a, cube_a, cube_a),
-                                                        vec3(cube_a, -cube_a, cube_a), make_unique<DiffuseMaterial>(white)),
-
-                                                        Triangle(vec3(-cube_a, cube_a, cube_a), vec3(cube_a, -cube_a, cube_a),
-                                                        vec3(-cube_a, -cube_a, cube_a), make_unique<DiffuseMaterial>(white)),
-
-                                                        Triangle(vec3(-cube_a, cube_a, -cube_a), vec3(-cube_a, cube_a, cube_a),
-                                                        vec3(-cube_a, -cube_a, cube_a), make_unique<DiffuseMaterial>(red)),
-
-                                                        Triangle(vec3(-cube_a, cube_a, -cube_a), vec3(-cube_a, -cube_a, cube_a),
-                                                        vec3(-cube_a, -cube_a, -cube_a), make_unique<DiffuseMaterial>(red)),
-
-                                                        Triangle(vec3(cube_a, cube_a, -cube_a), vec3(cube_a, -cube_a, cube_a),
-                                                        vec3(cube_a, cube_a, cube_a), make_unique<DiffuseMaterial>(green)),
-
-                                                        Triangle(vec3(cube_a, cube_a, -cube_a), vec3(cube_a, -cube_a, -cube_a),
-                                                        vec3(cube_a, -cube_a, cube_a), make_unique<DiffuseMaterial>(green)),
-
-                                                        Triangle(vec3(-cube_a, cube_a, cube_a), vec3(cube_a, cube_a, -cube_a),
-                                                        vec3(cube_a, cube_a, cube_a), make_unique<DiffuseMaterial>(white)),
-
-                                                        Triangle(vec3(-cube_a, cube_a, cube_a), vec3(-cube_a, cube_a, -cube_a),
-                                                        vec3(cube_a, cube_a, -cube_a), make_unique<DiffuseMaterial>(white)),
-
-                                                        Triangle(vec3(-cube_a, -cube_a, cube_a), vec3(cube_a, -cube_a, cube_a),
-                                                        vec3(cube_a, -cube_a, -cube_a), make_unique<DiffuseMaterial>(white)),
-
-                                                        Triangle(vec3(-cube_a, -cube_a, cube_a), vec3(cube_a, -cube_a, -cube_a),
-                                                        vec3(-cube_a, -cube_a, -cube_a), make_unique<DiffuseMaterial>(white)),
-
-                                                        Triangle(vec3(-2, cube_a - 1, 2), vec3(2, cube_a - 1, 2),
-                                                        vec3(2, cube_a - 1, -2), make_unique<LightMaterial>(ColorMap, SamplesCount, white)),
-
-                                                        Triangle(vec3(-2, cube_a - 1, 2), vec3(2, cube_a - 1, -2),
-                                                        vec3(-2, cube_a - 1, -2), make_unique<LightMaterial>(ColorMap, SamplesCount, white))};
-
-
+void traceRay(Ray &ray, const std::array<Triangle, 12> &triangles, vector<vector<vec3> > &ColorMap, vector<vector<int> > &SamplesCount) {
     vec3 result = black;
-
     float t = INFINITY;
+    int triangles_count = triangles.size();
     int i = 0, cur=-1;
     for (i = 0; i < triangles_count; ++i) {
         if (triangles[i].intersect(ray, t)) {
@@ -253,6 +212,47 @@ int main() {
     vector<vector<vec3> > ColorMap(W, vector<vec3>(H, vec3(0)));
     vector<vector<int> > SamplesCount(W, vector<int>(H, 0));
 
+
+    float cube_a = 10;
+    const int triangles_count = 12;
+    const array<Triangle, triangles_count> triangles = {Triangle(vec3(-cube_a, cube_a, cube_a), vec3(cube_a, cube_a, cube_a),
+                                                                 vec3(cube_a, -cube_a, cube_a), make_unique<DiffuseMaterial>(white)),
+
+                                                        Triangle(vec3(-cube_a, cube_a, cube_a), vec3(cube_a, -cube_a, cube_a),
+                                                                 vec3(-cube_a, -cube_a, cube_a), make_unique<DiffuseMaterial>(white)),
+
+                                                        Triangle(vec3(-cube_a, cube_a, -cube_a), vec3(-cube_a, cube_a, cube_a),
+                                                                 vec3(-cube_a, -cube_a, cube_a), make_unique<DiffuseMaterial>(red)),
+
+                                                        Triangle(vec3(-cube_a, cube_a, -cube_a), vec3(-cube_a, -cube_a, cube_a),
+                                                                 vec3(-cube_a, -cube_a, -cube_a), make_unique<DiffuseMaterial>(red)),
+
+                                                        Triangle(vec3(cube_a, cube_a, -cube_a), vec3(cube_a, -cube_a, cube_a),
+                                                                 vec3(cube_a, cube_a, cube_a), make_unique<DiffuseMaterial>(green)),
+
+                                                        Triangle(vec3(cube_a, cube_a, -cube_a), vec3(cube_a, -cube_a, -cube_a),
+                                                                 vec3(cube_a, -cube_a, cube_a), make_unique<DiffuseMaterial>(green)),
+
+                                                        Triangle(vec3(-cube_a, cube_a, cube_a), vec3(cube_a, cube_a, -cube_a),
+                                                                 vec3(cube_a, cube_a, cube_a), make_unique<DiffuseMaterial>(white)),
+
+                                                        Triangle(vec3(-cube_a, cube_a, cube_a), vec3(-cube_a, cube_a, -cube_a),
+                                                                 vec3(cube_a, cube_a, -cube_a), make_unique<DiffuseMaterial>(white)),
+
+                                                        Triangle(vec3(-cube_a, -cube_a, cube_a), vec3(cube_a, -cube_a, cube_a),
+                                                                 vec3(cube_a, -cube_a, -cube_a), make_unique<DiffuseMaterial>(white)),
+
+                                                        Triangle(vec3(-cube_a, -cube_a, cube_a), vec3(cube_a, -cube_a, -cube_a),
+                                                                 vec3(-cube_a, -cube_a, -cube_a), make_unique<DiffuseMaterial>(white)),
+
+                                                        Triangle(vec3(-2, cube_a - 1, 2), vec3(2, cube_a - 1, 2),
+                                                                 vec3(2, cube_a - 1, -2), make_unique<LightMaterial>(ColorMap, SamplesCount, white)),
+
+                                                        Triangle(vec3(-2, cube_a - 1, 2), vec3(2, cube_a - 1, -2),
+                                                                 vec3(-2, cube_a - 1, -2), make_unique<LightMaterial>(ColorMap, SamplesCount, white))};
+
+
+
     bitmap_image image(H, W);
 
     image.clear();
@@ -267,7 +267,7 @@ int main() {
                                 1);
                 Ray ray = Ray(vec3(0, 0, -20), dir, 0, ivec2(x, y));
                 while (ray.is_valid()) {
-                    traceRay(ray, ColorMap, SamplesCount);
+                    traceRay(ray, triangles, ColorMap, SamplesCount);
                 }
             }
         }
