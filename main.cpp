@@ -181,9 +181,7 @@ struct Triangle {
         if (abs(full_square - small_square_1 - small_square_2 - small_square_3) > EPS) {
             return false;
         }
-        if (newT < t) {
             t = newT;
-        }
         return true;
     }
 };
