@@ -147,10 +147,13 @@ bool planeintersect(Ray &ray, float &t, vec3 N, float D) {
     }
 }
 
-struct Triangle {
+class Triangle {
+private:
     std::array<vec3, 3> vertices;
     vec3 N;
     float D;
+
+public:
     unique_ptr<BaseMaterial> material;
     Triangle(std::array<vec3, 3> a, unique_ptr<BaseMaterial> &&m): vertices(a), material(move(m)) {
         vec3 e1 = vertices[1] - vertices[0];
