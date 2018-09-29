@@ -170,6 +170,10 @@ struct Triangle {
             return false;
         }
 
+        if (newT >= t) {
+            return false;
+        }
+
         vec3 pi = ray.getBegin() + ray.getDir() * newT;
         float full_square = square(vertices[0], vertices[1], vertices[2]);
         float small_square_1 = square(pi, vertices[1], vertices[2]);
