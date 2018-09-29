@@ -189,7 +189,7 @@ struct Triangle {
     }
 };
 
-void traceRay(Ray &ray, const std::array<Triangle, 12> &triangles, vector<vector<vec3> > &ColorMap, vector<vector<int> > &SamplesCount) {
+void traceRay(Ray &ray, const std::array<Triangle, 12> &triangles) {
     vec3 result = black;
     float t = INFINITY;
     int triangles_count = triangles.size();
@@ -271,7 +271,7 @@ int main() {
                                 1);
                 Ray ray = Ray(vec3(0, 0, -20), dir, 0, ivec2(x, y));
                 while (ray.is_valid()) {
-                    traceRay(ray, triangles, ColorMap, SamplesCount);
+                    traceRay(ray, triangles);
                 }
             }
         }
