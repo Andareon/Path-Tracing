@@ -92,6 +92,7 @@ public:
     void process(Ray &ray, vec3 pi, vec3 N) {
         if (ray.getCol() == black) {
             ray.make_invalid();
+            return;
         }
 
         ray.reflect(pi + N * EPS, reflect(ray.getDir(), N), white);
@@ -104,6 +105,7 @@ public:
     void process(Ray &ray, vec3 pi, vec3 N) {
         if (ray.getCol() == black) {
             ray.make_invalid();
+            return;
         }
 
         vec3 rnd = normalize(vec3(round(distribution(generator) * 200), round(distribution(generator) * 200), round(distribution(generator) * 200)));
@@ -123,10 +125,10 @@ public:
     vector<vector<int> > &SamplesCount;
     LightMaterial(vector<vector<vec3> > &CM, vector<vector<int> > &SC, vec3 col) :ColorMap(CM), SamplesCount(SC), BaseMaterial(col){};
     void process(Ray &ray, vec3 pi, vec3 N) {
-        ray.make_invalid();
         ray.reflect(pi, pi, color);
         ColorMap[ray.getCoords().x][ray.getCoords().y] += ray.getCol();
         ++SamplesCount[ray.getCoords().x][ray.getCoords().y];
+        ray.make_invalid();
     }
 };
 
