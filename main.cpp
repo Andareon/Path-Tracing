@@ -195,7 +195,6 @@ public:
 };
 
 void traceRay(Ray &ray, const std::array<Triangle, 12> &triangles) {
-    vec3 result = black;
     float t = INFINITY;
     int triangles_count = triangles.size();
     int i = 0, cur=-1;
