@@ -4,6 +4,7 @@ project(Ray_Tracing)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_FLAGS "-fopenmp")
 
-include_directories(../glm)
+include_directories(../Libs/glm)
+include_directories(../Libs/assimp)
 
 add_executable(Ray_Tracing main.cpp)
