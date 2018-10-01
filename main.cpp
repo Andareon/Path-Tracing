@@ -4,7 +4,6 @@
 
 #include "bitmap_image.hpp"
 #include "glm/geometric.hpp"
-#include "glm/vec3.hpp"
 
 using namespace std;
 using namespace glm;
