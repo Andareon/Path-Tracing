@@ -28,29 +28,33 @@ std::uniform_real_distribution<> distribution(-0.5f, 0.5f);
 
 class Ray;
 
-float square(vec3 A, vec3 B, vec3 C) {
+float square(vec4 A, vec4 B, vec4 C) {
     vec3 a = B - A;
     vec3 b = C - A;
     vec3 c = cross(a, b);
     return length(c) / 2;
 }
 
+vec4 cross(vec4 a, vec4 b) {
+    return vec4(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x, 0);
+}
+
 class Ray {
 private:
-    vec3 begin;
-    vec3 dir;
+    vec4 begin;
+    vec4 dir;
     int depth = 0;
     ivec2 coords = {0, 0};
     vec3 col = vec3(1);
 
 public:
-    vec3 getBegin() const {return begin;}
+    vec4 getBegin() const {return begin;}
 
-    void setBegin(vec3 bg) {begin=bg;}
+    void setBegin(vec4 bg) {begin=bg;}
 
-    vec3 getDir() const {return normalize(dir);}
+    vec4 getDir() const {return normalize(dir);}
 
-    void setDir(vec3 dr) {dir=dr;}
+    void setDir(vec4 dr) {dir=dr;}
 
     int getDepth() const {return depth;}
 
@@ -62,7 +66,7 @@ public:
 
     void setCol(vec3 cl) {col=cl;}
 
-    void reflect(vec3 bg, vec3 dr, vec3 cl) {
+    void reflect(vec4 bg, vec4 dr, vec3 cl) {
         begin = bg;
         dir = normalize(dr);
         col *= cl;
@@ -73,14 +77,14 @@ public:
 
     void make_invalid() {depth = MAX_RAY_REFLECTIONS;}
 
-    Ray(vec3 i, vec3 j, int k, ivec2 l) :begin(i), dir(normalize(j)), depth(k), coords(l) {}
+    Ray(vec4 i, vec4 j, int k, ivec2 l) :begin(i), dir(normalize(j)), depth(k), coords(l) {}
 };
 
 
 
 class BaseMaterial {
 public:
-    virtual void process(Ray &ray, vec3 pi, vec3 N) = 0;
+    virtual void process(Ray &ray, vec4 pi, vec4 N) = 0;
     virtual ~BaseMaterial() = default;
     vec3 color;
     BaseMaterial(vec3 col) :color(col) {};
@@ -89,7 +93,7 @@ public:
 class MirrorMaterial : public BaseMaterial {
 public:
     MirrorMaterial(vec3 col) :BaseMaterial(col) {};
-    void process(Ray &ray, vec3 pi, vec3 N) {
+    void process(Ray &ray, vec4 pi, vec4 N) {
         if (ray.getCol() == black) {
             ray.make_invalid();
             return;
@@ -102,13 +106,13 @@ public:
 class DiffuseMaterial : public BaseMaterial {
 public:
     DiffuseMaterial(vec3 col) :BaseMaterial(col) {};
-    void process(Ray &ray, vec3 pi, vec3 N) {
+    void process(Ray &ray, vec4 pi, vec4 N) {
         if (ray.getCol() == black) {
             ray.make_invalid();
             return;
         }
 
-        vec3 rnd = normalize(vec3(distribution(generator), distribution(generator), distribution(generator)));
+        vec4 rnd = normalize(vec4(distribution(generator), distribution(generator), distribution(generator), 0));
         if (dot(N, rnd) < 0) {
             rnd *= -1;
         }
@@ -124,16 +128,16 @@ public:
     vector<vector<vec3> > &ColorMap;
     vector<vector<int> > &SamplesCount;
     LightMaterial(vector<vector<vec3> > &CM, vector<vector<int> > &SC, vec3 col) :ColorMap(CM), SamplesCount(SC), BaseMaterial(col){};
-    void process(Ray &ray, vec3 pi, vec3 N) {
+    void process(Ray &ray, vec4 pi, vec4 N) {
         ColorMap[ray.getCoords().x][ray.getCoords().y] += ray.getCol() * color;
         ++SamplesCount[ray.getCoords().x][ray.getCoords().y];
         ray.make_invalid();
     }
 };
 
-bool planeintersect(Ray &ray, float &t, vec3 N, float D) {
-    vec3 o = ray.getBegin();
-    vec3 d = ray.getDir();
+bool planeintersect(Ray &ray, float &t, vec4 N, float D) {
+    vec4 o = ray.getBegin();
+    vec4 d = ray.getDir();
     if (std::abs(dot(N, d)) < EPS) {
         return false;
     } else {
@@ -149,20 +153,20 @@ bool planeintersect(Ray &ray, float &t, vec3 N, float D) {
 
 class Triangle {
 private:
-    std::array<vec3, 3> vertices;
-    vec3 N;
+    std::array<vec4, 3> vertices;
+    vec4 N;
     float D;
 
 public:
     unique_ptr<BaseMaterial> material;
-    Triangle(std::array<vec3, 3> a, unique_ptr<BaseMaterial> &&m): vertices(a), material(move(m)) {
-        vec3 e1 = vertices[1] - vertices[0];
-        vec3 e2 = vertices[2] - vertices[0];
+    Triangle(std::array<vec4, 3> a, unique_ptr<BaseMaterial> &&m): vertices(a), material(move(m)) {
+        vec4 e1 = vertices[1] - vertices[0];
+        vec4 e2 = vertices[2] - vertices[0];
         N = normalize(cross(e1, e2));
         D = -dot(N, vertices[0]);
     }
 
-    vec3 getNormal() const {
+    vec4 getNormal() const {
         return N;
     }
 
@@ -176,7 +180,7 @@ public:
             return false;
         }
 
-        vec3 pi = ray.getBegin() + ray.getDir() * newT;
+        vec4 pi = ray.getBegin() + ray.getDir() * newT;
         float full_square = square(vertices[0], vertices[1], vertices[2]);
         float small_square_1 = square(pi, vertices[1], vertices[2]);
         float small_square_2 = square(vertices[0], pi, vertices[2]);
@@ -200,8 +204,8 @@ void traceRay(Ray &ray, const std::array<Triangle, 12> &triangles) {
         }
     }
     if (cur > -1) {
-        vec3 pi = ray.getBegin() + ray.getDir() * t;
-        vec3 N = triangles[cur].getNormal();
+        vec4 pi = ray.getBegin() + ray.getDir() * t;
+        vec4 N = triangles[cur].getNormal();
         triangles[cur].material->process(ray, pi, N);
     } else {
         ray.make_invalid();
@@ -219,41 +223,41 @@ int main() {
 
     float cube_a = 10;
     const int triangles_count = 12;
-    const array<Triangle, triangles_count> triangles = {Triangle({vec3(-cube_a, cube_a, cube_a), vec3(cube_a, cube_a, cube_a),
-                                                                 vec3(cube_a, -cube_a, cube_a)}, make_unique<DiffuseMaterial>(white)),
+    const array<Triangle, triangles_count> triangles = {Triangle({vec4(-cube_a, cube_a, cube_a, 1), vec4(cube_a, cube_a, cube_a, 1),
+                                                                 vec4(cube_a, -cube_a, cube_a, 1)}, make_unique<DiffuseMaterial>(white)),
 
-                                                        Triangle({vec3(-cube_a, cube_a, cube_a), vec3(cube_a, -cube_a, cube_a),
-                                                                 vec3(-cube_a, -cube_a, cube_a)}, make_unique<DiffuseMaterial>(white)),
+                                                        Triangle({vec4(-cube_a, cube_a, cube_a, 1), vec4(cube_a, -cube_a, cube_a, 1),
+                                                                 vec4(-cube_a, -cube_a, cube_a, 1)}, make_unique<DiffuseMaterial>(white)),
 
-                                                        Triangle({vec3(-cube_a, cube_a, -cube_a), vec3(-cube_a, cube_a, cube_a),
-                                                                 vec3(-cube_a, -cube_a, cube_a)}, make_unique<DiffuseMaterial>(red)),
+                                                        Triangle({vec4(-cube_a, cube_a, -cube_a, 1), vec4(-cube_a, cube_a, cube_a, 1),
+                                                                 vec4(-cube_a, -cube_a, cube_a, 1)}, make_unique<DiffuseMaterial>(red)),
 
-                                                        Triangle({vec3(-cube_a, cube_a, -cube_a), vec3(-cube_a, -cube_a, cube_a),
-                                                                 vec3(-cube_a, -cube_a, -cube_a)}, make_unique<DiffuseMaterial>(red)),
+                                                        Triangle({vec4(-cube_a, cube_a, -cube_a, 1), vec4(-cube_a, -cube_a, cube_a, 1),
+                                                                 vec4(-cube_a, -cube_a, -cube_a, 1)}, make_unique<DiffuseMaterial>(red)),
 
-                                                        Triangle({vec3(cube_a, cube_a, -cube_a), vec3(cube_a, -cube_a, cube_a),
-                                                                 vec3(cube_a, cube_a, cube_a)}, make_unique<DiffuseMaterial>(green)),
+                                                        Triangle({vec4(cube_a, cube_a, -cube_a, 1), vec4(cube_a, -cube_a, cube_a, 1),
+                                                                 vec4(cube_a, cube_a, cube_a, 1)}, make_unique<DiffuseMaterial>(green)),
 
-                                                        Triangle({vec3(cube_a, cube_a, -cube_a), vec3(cube_a, -cube_a, -cube_a),
-                                                                 vec3(cube_a, -cube_a, cube_a)}, make_unique<DiffuseMaterial>(green)),
+                                                        Triangle({vec4(cube_a, cube_a, -cube_a, 1), vec4(cube_a, -cube_a, -cube_a, 1),
+                                                                 vec4(cube_a, -cube_a, cube_a, 1)}, make_unique<DiffuseMaterial>(green)),
 
-                                                        Triangle({vec3(-cube_a, cube_a, cube_a), vec3(cube_a, cube_a, -cube_a),
-                                                                 vec3(cube_a, cube_a, cube_a)}, make_unique<DiffuseMaterial>(white)),
+                                                        Triangle({vec4(-cube_a, cube_a, cube_a, 1), vec4(cube_a, cube_a, -cube_a, 1),
+                                                                 vec4(cube_a, cube_a, cube_a, 1)}, make_unique<DiffuseMaterial>(white)),
 
-                                                        Triangle({vec3(-cube_a, cube_a, cube_a), vec3(-cube_a, cube_a, -cube_a),
-                                                                 vec3(cube_a, cube_a, -cube_a)}, make_unique<DiffuseMaterial>(white)),
+                                                        Triangle({vec4(-cube_a, cube_a, cube_a, 1), vec4(-cube_a, cube_a, -cube_a, 1),
+                                                                 vec4(cube_a, cube_a, -cube_a, 1)}, make_unique<DiffuseMaterial>(white)),
 
-                                                        Triangle({vec3(-cube_a, -cube_a, cube_a), vec3(cube_a, -cube_a, cube_a),
-                                                                 vec3(cube_a, -cube_a, -cube_a)}, make_unique<DiffuseMaterial>(white)),
+                                                        Triangle({vec4(-cube_a, -cube_a, cube_a, 1), vec4(cube_a, -cube_a, cube_a, 1),
+                                                                 vec4(cube_a, -cube_a, -cube_a, 1)}, make_unique<DiffuseMaterial>(white)),
 
-                                                        Triangle({vec3(-cube_a, -cube_a, cube_a), vec3(cube_a, -cube_a, -cube_a),
-                                                                 vec3(-cube_a, -cube_a, -cube_a)}, make_unique<DiffuseMaterial>(white)),
+                                                        Triangle({vec4(-cube_a, -cube_a, cube_a, 1), vec4(cube_a, -cube_a, -cube_a, 1),
+                                                                 vec4(-cube_a, -cube_a, -cube_a, 1)}, make_unique<DiffuseMaterial>(white)),
 
-                                                        Triangle({vec3(-2, cube_a - 1, 2), vec3(2, cube_a - 1, 2),
-                                                                 vec3(2, cube_a - 1, -2)}, make_unique<LightMaterial>(ColorMap, SamplesCount, white)),
+                                                        Triangle({vec4(-2, cube_a - 1, 2, 1), vec4(2, cube_a - 1, 2, 1),
+                                                                 vec4(2, cube_a - 1, -2, 1)}, make_unique<LightMaterial>(ColorMap, SamplesCount, white)),
 
-                                                        Triangle({vec3(-2, cube_a - 1, 2), vec3(2, cube_a - 1, -2),
-                                                                 vec3(-2, cube_a - 1, -2)}, make_unique<LightMaterial>(ColorMap, SamplesCount, white))};
+                                                        Triangle({vec4(-2, cube_a - 1, 2, 1), vec4(2, cube_a - 1, -2, 1),
+                                                                 vec4(-2, cube_a - 1, -2, 1)}, make_unique<LightMaterial>(ColorMap, SamplesCount, white))};
 
 
 
@@ -266,10 +270,10 @@ int main() {
         for (int y = 0; y < H; ++y) {
             #pragma omp parallel for num_threads(4)
             for (int x = 0; x < W; ++x) {
-                vec3 dir = vec3((x - W / 2 + distribution(generator)) / W,
+                vec4 dir = vec4((x - W / 2 + distribution(generator)) / W,
                                 -(y - H / 2 + distribution(generator)) / H,
-                                1);
-                Ray ray = Ray(vec3(0, 0, -20), dir, 0, ivec2(x, y));
+                                1, 0);
+                Ray ray = Ray(vec4(0, 0, -20, 1), dir, 0, ivec2(x, y));
                 while (ray.is_valid()) {
                     traceRay(ray, triangles);
                 }
