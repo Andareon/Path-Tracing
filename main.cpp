@@ -136,13 +136,13 @@ public:
     }
 };
 
-bool planeintersect(Ray &ray, float &t, vec4 N, float D) {
+bool planeintersect(Ray &ray, float &t, vec4 plane) {
     vec4 o = ray.getBegin();
     vec4 d = ray.getDir();
-    if (std::abs(dot(N, d)) < EPS) {
+    if (std::abs(dot(plane, d)) < EPS) {
         return false;
     } else {
-        float newT = -(dot(o, N) + D) / dot(d, N);
+        float newT = -(dot(o, vec4(plane.x, plane.y, plane.z, 0)) - plane.w) / dot(d, vec4(plane.x, plane.y, plane.z, 0));
         if (t > newT && newT > 0) {
             t = newT;
             return true;
@@ -155,25 +155,24 @@ bool planeintersect(Ray &ray, float &t, vec4 N, float D) {
 class Triangle {
 private:
     std::array<vec4, 3> vertices;
-    vec4 N;
-    float D;
+    vec4 plane;
 
 public:
     unique_ptr<BaseMaterial> material;
     Triangle(std::array<vec4, 3> a, unique_ptr<BaseMaterial> &&m): vertices(a), material(move(m)) {
         vec4 e1 = vertices[1] - vertices[0];
         vec4 e2 = vertices[2] - vertices[0];
-        N = normalize(cross(e1, e2));
-        D = -dot(N, vertices[0]);
+        plane = normalize(cross(e1, e2));
+        plane.w = dot(plane, vertices[0]);
     }
 
     vec4 getNormal() const {
-        return N;
+        return vec4(plane.x, plane.y, plane.z, 0);
     }
 
     bool intersect(Ray &ray, float &t) const {
         float newT = INFINITY;
-        if (!planeintersect(ray, newT, N, D)) {
+        if (!planeintersect(ray, newT, plane)) {
             return false;
         }
 
