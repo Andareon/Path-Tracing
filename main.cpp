@@ -83,10 +83,11 @@ public:
 
 
 class BaseMaterial {
+protected:
+    vec3 color;
 public:
     virtual void process(Ray &ray, vec4 pi, vec4 N) = 0;
     virtual ~BaseMaterial() = default;
-    vec3 color;
     BaseMaterial(vec3 col) :color(col) {};
 };
 
