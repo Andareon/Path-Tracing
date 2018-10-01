@@ -142,7 +142,7 @@ bool planeintersect(Ray &ray, float &t, vec4 plane) {
     if (std::abs(dot(plane, d)) < EPS) {
         return false;
     } else {
-        float newT = -(dot(o, vec4(plane.x, plane.y, plane.z, 0)) - plane.w) / dot(d, vec4(plane.x, plane.y, plane.z, 0));
+        float newT = -dot(o, plane) / dot(d, plane);
         if (t > newT && newT > 0) {
             t = newT;
             return true;
@@ -163,7 +163,7 @@ public:
         vec4 e1 = vertices[1] - vertices[0];
         vec4 e2 = vertices[2] - vertices[0];
         plane = normalize(cross(e1, e2));
-        plane.w = dot(plane, vertices[0]);
+        plane.w = -dot(plane, vertices[0]);
     }
 
     vec4 getNormal() const {
