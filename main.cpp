@@ -5,6 +5,7 @@
 #include "bitmap_image.hpp"
 #include "glm/geometric.hpp"
 
+
 using namespace std;
 using namespace glm;
 
@@ -218,7 +219,6 @@ int main() {
     vector<vector<vec3> > ColorMap(W, vector<vec3>(H, vec3(0)));
     vector<vector<int> > SamplesCount(W, vector<int>(H, 0));
 
-
     float cube_a = 10;
     const int triangles_count = 12;
     const array<Triangle, triangles_count> triangles = {Triangle({vec4(-cube_a, cube_a, cube_a, 1), vec4(cube_a, cube_a, cube_a, 1),
@@ -296,5 +296,5 @@ int main() {
                   to_string(now->tm_mday) + '-' + to_string(now->tm_hour) + '-' + to_string(now->tm_min) + '-' +
                   to_string(now->tm_sec) + "  " + to_string(end_time - start_time);
     image.save_image(date + ".bmp");
-    image.save_image("last.bmp");
+    image.save_image("result.bmp");
 }

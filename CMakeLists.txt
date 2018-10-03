@@ -6,5 +6,6 @@ set(CMAKE_CXX_FLAGS "-fopenmp")
 
 include_directories(../Libs/glm)
 include_directories(../Libs/assimp)
+include_directories(../Libs)
 
 add_executable(Ray_Tracing main.cpp)
