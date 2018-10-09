@@ -1,6 +1,7 @@
 #include <memory>
 #include <random>
 #include <ctime>
+#include <cmath>
 
 #include "bitmap_image.hpp"
 #include "glm/geometric.hpp"
@@ -16,6 +17,7 @@ static const vec3 violet(1, 0.1, 1);
 static const vec3 yellow(1, 1, 0.1);
 static const vec3 black(0, 0, 0);
 static const vec3 green(0.1, 1, 0.1);
+static const vec3 gray(0.5, 0.5, 0.5);
 
 const int W = 500;
 const int H = 500;
@@ -80,6 +82,17 @@ public:
     Ray(vec4 i, vec4 j, int k, ivec2 l) :begin(i), dir(normalize(j)), depth(k), coords(l) {}
 };
 
+vec4 refract(vec4 dir, vec4 N, float n) {
+    float cosI = -dot(N, dir);
+    float sinT = n * sqrt(1.0f - cosI * cosI);
+    if (sinT > 1) {
+        return reflect(dir, N);
+    }
+    float cosT = sqrt(1.0f - sinT * sinT);
+    vec4 dirT = dir * n + N * (n * cosI - cosT);
+    return dirT;
+}
+
 
 
 class BaseMaterial {
@@ -100,7 +113,7 @@ public:
             return;
         }
 
-        ray.reflect(pi + N * EPS, reflect(ray.getDir(), N), white);
+        ray.reflect(pi + N * EPS, reflect(ray.getDir(), N), color);
     }
 };
 
@@ -135,6 +148,31 @@ public:
         ray.make_invalid();
     }
 };
+
+class TransparentMaterial : public BaseMaterial {
+public:
+    float n1;
+    TransparentMaterial(vec3 col, float n) :BaseMaterial(col), n1(n){};
+    void process(Ray &ray, vec4 pi, vec4 N) {
+        if (ray.getCol() == black) {
+            ray.make_invalid();
+            return;
+        }
+
+        vec4 dir;
+        vec3 col;
+        if (dot(N, ray.getDir()) > 0) {
+            dir = refract(ray.getDir(), -N, n1);
+            col = white;
+        } else {
+            dir = refract(ray.getDir(), N, 1 / n1);
+            col = color;
+        }
+
+        ray.reflect(pi + dir * EPS, dir, col);
+    }
+};
+
 
 bool planeintersect(Ray &ray, float &t, vec4 plane) {
     vec4 o = ray.getBegin();
@@ -193,7 +231,7 @@ public:
     }
 };
 
-void traceRay(Ray &ray, const std::array<Triangle, 12> &triangles) {
+void traceRay(Ray &ray, const std::array<Triangle, 18> &triangles) {
     float t = INFINITY;
     int triangles_count = triangles.size();
     int i = 0, cur=-1;
@@ -220,7 +258,8 @@ int main() {
     vector<vector<int> > SamplesCount(W, vector<int>(H, 0));
 
     float cube_a = 10;
-    const int triangles_count = 12;
+    float pir_a = 4;
+    const int triangles_count = 18;
     const array<Triangle, triangles_count> triangles = {Triangle({vec4(-cube_a, cube_a, cube_a, 1), vec4(cube_a, cube_a, cube_a, 1),
                                                                  vec4(cube_a, -cube_a, cube_a, 1)}, make_unique<DiffuseMaterial>(white)),
 
@@ -255,7 +294,25 @@ int main() {
                                                                  vec4(2, cube_a - 1, -2, 1)}, make_unique<LightMaterial>(ColorMap, SamplesCount, white)),
 
                                                         Triangle({vec4(-2, cube_a - 1, 2, 1), vec4(2, cube_a - 1, -2, 1),
-                                                                 vec4(-2, cube_a - 1, -2, 1)}, make_unique<LightMaterial>(ColorMap, SamplesCount, white))};
+                                                                 vec4(-2, cube_a - 1, -2, 1)}, make_unique<LightMaterial>(ColorMap, SamplesCount, white)),
+
+                                                        Triangle({vec4(5 + 0, pir_a, 0, 1), vec4(5 + -pir_a, -1, pir_a, 1),
+                                                                  vec4(5 + pir_a, -1, pir_a, 1)}, make_unique<TransparentMaterial>(yellow, 1.25)),
+
+                                                        Triangle({vec4(5 + 0, pir_a, 0, 1), vec4(5 + pir_a, -1, pir_a, 1),
+                                                                  vec4(5 + pir_a, -1, -pir_a, 1)}, make_unique<TransparentMaterial>(yellow, 1.25)),
+
+                                                        Triangle({vec4(5 + 0, pir_a, 0, 1), vec4(5 + -pir_a, -1, -pir_a, 1),
+                                                                  vec4(5 + -pir_a, -1, pir_a, 1)}, make_unique<TransparentMaterial>(yellow, 1.25)),
+
+                                                        Triangle({vec4(5 + 0, pir_a, 0, 1), vec4(5 + pir_a, -1, -pir_a, 1),
+                                                                  vec4(5 + -pir_a, -1, -pir_a, 1)}, make_unique<TransparentMaterial>(yellow, 1.25)),
+
+                                                        Triangle({vec4(5 + -pir_a, -1, pir_a, 1), vec4(5 + pir_a, -1, -pir_a, 1),
+                                                                  vec4(5 + pir_a, -1, pir_a, 1)}, make_unique<TransparentMaterial>(yellow, 1.25)),
+
+                                                        Triangle({vec4(5 + -pir_a, -1, pir_a, 1), vec4(5 + -pir_a, -1, -pir_a, 1),
+                                                                  vec4(5 + pir_a, -1, -pir_a, 1)}, make_unique<TransparentMaterial>(yellow, 1.25))};
 
 
 
