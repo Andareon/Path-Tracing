@@ -342,11 +342,7 @@ int main() {
             if (!SamplesCount[x][y]) {
                 continue;
             }
-            vec3 c = ColorMap[x][y] / static_cast<float>(SamplesCount[x][y]);
-            c.r = pow(c.r, (1.0 / 2.2));
-            c.g = pow(c.g, (1.0 / 2.2));
-            c.b = pow(c.b, (1.0 / 2.2));
-            c *= 255.0f;
+            vec3 c = pow(ColorMap[x][y] / static_cast<float>(SamplesCount[x][y]), vec3(1/2.2)) * 255.0f;
             image.set_pixel(x, y, c.r, c.g, c.b);
         }
     }
