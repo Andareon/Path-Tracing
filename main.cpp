@@ -150,8 +150,9 @@ public:
 };
 
 class TransparentMaterial : public BaseMaterial {
-public:
+private:
     float n1;
+public:
     TransparentMaterial(vec3 col, float n) :BaseMaterial(col), n1(n){};
     void process(Ray &ray, vec4 pi, vec4 N) {
         if (ray.getCol() == black) {
