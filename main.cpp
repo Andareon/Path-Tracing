@@ -333,7 +333,16 @@ int main() {
                 while (ray.is_valid()) {
                     traceRay(ray, triangles);
                 }
+                if ((i + 1) % 30 == 0) {
+                    if (SamplesCount[x][y]) {
+                        vec3 c = pow(ColorMap[x][y] / static_cast<float>(SamplesCount[x][y]), vec3(1/2.2)) * 255.0f;
+                        image.set_pixel(x, y, c.r, c.g, c.b);
+                    }
+                }
             }
+        }
+        if ((i + 1) % 30 == 0) {
+            image.save_image("result.bmp");
         }
     }
 
