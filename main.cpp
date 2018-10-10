@@ -23,12 +23,11 @@ const int W = 500;
 const int H = 500;
 const int RAYS_PER_PIXEL = 200;
 const int MAX_RAY_REFLECTIONS = 8;
+const float PI = 3.141593;
 const float EPS = 1e-6;
 
 std::default_random_engine generator(time(0));
 std::uniform_real_distribution<> distribution(-0.5f, 0.5f);
-
-class Ray;
 
 float square(vec4 A, vec4 B, vec4 C) {
     vec3 a = B - A;
@@ -81,6 +80,29 @@ public:
 
     Ray(vec4 i, vec4 j, int k, ivec2 l) :begin(i), dir(normalize(j)), depth(k), coords(l) {}
 };
+
+vector<vector<vec3> > gauss_blur(vector<vector<vec3> > ColorMap, float r) {
+    int rs = ceil(r * 2.57);
+    vector<vector<vec3> > Ans(W, vector<vec3>(H, vec3(0)));
+    for (int i = 0; i < H; ++i) {
+        for (int j = 0; j < W; ++j) {
+            vec3 val = vec3(0);
+            float wsum = 0;
+            for (int iy = i - rs; iy <= i + rs; ++iy) {
+                for (int ix = j - rs; ix <= j + rs; ++ix) {
+                    int x = std::min(W-1, std::max(0, ix));
+                    int y = std::min(H-1, std::max(0, iy));
+                    int dsq = (ix-j)*(ix-j)+(iy-i)*(iy-i);
+                    float wght = exp(-dsq / (2 * r * r)) / (PI * 2 * r * r);
+                    val += ColorMap[x][y] * wght;
+                    wsum += wght;
+                }
+            }
+            Ans[j][i] = round(val / wsum);
+        }
+    }
+    return Ans;
+}
 
 vec4 refract(vec4 dir, vec4 N, float n) {
     float cosI = -dot(N, dir);
@@ -351,7 +373,17 @@ int main() {
             if (!SamplesCount[x][y]) {
                 continue;
             }
-            vec3 c = pow(ColorMap[x][y] / static_cast<float>(SamplesCount[x][y]), vec3(1/2.2)) * 255.0f;
+            ColorMap[x][y] = pow(ColorMap[x][y] / static_cast<float>(SamplesCount[x][y]), vec3(1/2.2)) * 255.0f;
+        }
+    }
+
+    ColorMap = gauss_blur(ColorMap, 0);
+    for (int y = 0; y < H; ++y) {
+        for (int x = 0; x < W; ++x) {
+            if (!SamplesCount[x][y]) {
+                continue;
+            }
+            vec3 c = ColorMap[x][y];
             image.set_pixel(x, y, c.r, c.g, c.b);
         }
     }
@@ -363,5 +395,5 @@ int main() {
                   to_string(now->tm_mday) + '-' + to_string(now->tm_hour) + '-' + to_string(now->tm_min) + '-' +
                   to_string(now->tm_sec) + "  " + to_string(end_time - start_time);
     image.save_image(date + ".bmp");
-    image.save_image("result.bmp");
+//    image.save_image("result.bmp");
 }
