@@ -5,6 +5,7 @@
 
 #include "bitmap_image.hpp"
 #include "glm/geometric.hpp"
+#include "config.h"
 
 
 using namespace std;
@@ -19,12 +20,7 @@ static const vec3 black(0, 0, 0);
 static const vec3 green(0.1, 1, 0.1);
 static const vec3 gray(0.5, 0.5, 0.5);
 
-const int W = 500;
-const int H = 500;
-const int RAYS_PER_PIXEL = 200;
-const int MAX_RAY_REFLECTIONS = 8;
 const float PI = 3.141593;
-const float EPS = 1e-6;
 
 std::default_random_engine generator(time(0));
 std::uniform_real_distribution<> distribution(-0.5f, 0.5f);
@@ -74,24 +70,24 @@ public:
         depth++;
     }
 
-    bool is_valid() const {return depth < MAX_RAY_REFLECTIONS;}
+    bool is_valid() const {return depth < Config::get().MAX_RAY_REFLECTIONS;}
 
-    void make_invalid() {depth = MAX_RAY_REFLECTIONS;}
+    void make_invalid() {depth = Config::get().MAX_RAY_REFLECTIONS;}
 
     Ray(vec4 i, vec4 j, int k, ivec2 l) :begin(i), dir(normalize(j)), depth(k), coords(l) {}
 };
 
 vector<vector<vec3> > gauss_blur(vector<vector<vec3> > ColorMap, float r) {
     int rs = ceil(r * 2.57);
-    vector<vector<vec3> > Ans(W, vector<vec3>(H, vec3(0)));
-    for (int i = 0; i < H; ++i) {
-        for (int j = 0; j < W; ++j) {
+    vector<vector<vec3> > Ans(Config::get().width, vector<vec3>(Config::get().height, vec3(0)));
+    for (int i = 0; i < Config::get().height; ++i) {
+        for (int j = 0; j < Config::get().width; ++j) {
             vec3 val = vec3(0);
             float wsum = 0;
             for (int iy = i - rs; iy <= i + rs; ++iy) {
                 for (int ix = j - rs; ix <= j + rs; ++ix) {
-                    int x = std::min(W-1, std::max(0, ix));
-                    int y = std::min(H-1, std::max(0, iy));
+                    int x = std::min(Config::get().width-1, std::max(0, ix));
+                    int y = std::min(Config::get().height-1, std::max(0, iy));
                     int dsq = (ix-j)*(ix-j)+(iy-i)*(iy-i);
                     float wght = exp(-dsq / (2 * r * r)) / (PI * 2 * r * r);
                     val += ColorMap[x][y] * wght;
@@ -135,7 +131,7 @@ public:
             return;
         }
 
-        ray.reflect(pi + N * EPS, reflect(ray.getDir(), N), color);
+        ray.reflect(pi + N * Config::get().EPS, reflect(ray.getDir(), N), color);
     }
 };
 
@@ -155,7 +151,7 @@ public:
 
         float dt = std::max(0.0f, dot(N, rnd));
 
-        ray.reflect(pi + N * EPS, rnd, color * dt);
+        ray.reflect(pi + N * Config::get().EPS, rnd, color * dt);
     }
 };
 
@@ -192,7 +188,7 @@ public:
             col = color;
         }
 
-        ray.reflect(pi + dir * EPS, dir, col);
+        ray.reflect(pi + dir * Config::get().EPS, dir, col);
     }
 };
 
@@ -200,7 +196,7 @@ public:
 bool planeintersect(Ray &ray, float &t, vec4 plane) {
     vec4 o = ray.getBegin();
     vec4 d = ray.getDir();
-    if (std::abs(dot(plane, d)) < EPS) {
+    if (std::abs(dot(plane, d)) < Config::get().EPS) {
         return false;
     } else {
         float newT = -dot(o, plane) / dot(d, plane);
@@ -246,7 +242,7 @@ public:
         float small_square_1 = square(pi, vertices[1], vertices[2]);
         float small_square_2 = square(vertices[0], pi, vertices[2]);
         float small_square_3 = square(vertices[0], vertices[1], pi);
-        if (abs(full_square - small_square_1 - small_square_2 - small_square_3) > EPS) {
+        if (abs(full_square - small_square_1 - small_square_2 - small_square_3) > Config::get().EPS) {
             return false;
         }
             t = newT;
@@ -274,11 +270,13 @@ void traceRay(Ray &ray, const std::array<Triangle, 18> &triangles) {
 
 
 
-int main() {
+int main(int argc, char* argv[]) {
     unsigned int start_time = clock();
 
-    vector<vector<vec3> > ColorMap(W, vector<vec3>(H, vec3(0)));
-    vector<vector<int> > SamplesCount(W, vector<int>(H, 0));
+    Config::get().set_config(argc, argv);
+
+    vector<vector<vec3> > ColorMap(Config::get().width, vector<vec3>(Config::get().height, vec3(0)));
+    vector<vector<int> > SamplesCount(Config::get().width, vector<int>(Config::get().height, 0));
 
     float cube_a = 10;
     float pir_a = 4;
@@ -339,17 +337,17 @@ int main() {
 
 
 
-    bitmap_image image(H, W);
+    bitmap_image image(Config::get().width, Config::get().height);
 
     image.clear();
 
 
-    for (int i = 0; i < RAYS_PER_PIXEL; ++i) {
-        for (int y = 0; y < H; ++y) {
+    for (int i = 0; i < Config::get().RAYS_PER_PIXEL; ++i) {
+        for (int y = 0; y < Config::get().height; ++y) {
             #pragma omp parallel for num_threads(4)
-            for (int x = 0; x < W; ++x) {
-                vec4 dir = vec4((x - W / 2 + distribution(generator)) / W,
-                                -(y - H / 2 + distribution(generator)) / H,
+            for (int x = 0; x < Config::get().width; ++x) {
+                vec4 dir = vec4((x - Config::get().width / 2 + distribution(generator)) / Config::get().width,
+                                -(y - Config::get().height / 2 + distribution(generator)) / Config::get().height,
                                 1, 0);
                 Ray ray = Ray(vec4(0, 0, -20, 1), dir, 0, ivec2(x, y));
                 while (ray.is_valid()) {
@@ -368,8 +366,8 @@ int main() {
         }
     }
 
-    for (int y = 0; y < H; ++y) {
-        for (int x = 0; x < W; ++x) {
+    for (int y = 0; y < Config::get().height; ++y) {
+        for (int x = 0; x < Config::get().width; ++x) {
             if (!SamplesCount[x][y]) {
                 continue;
             }
@@ -377,9 +375,9 @@ int main() {
         }
     }
 
-    ColorMap = gauss_blur(ColorMap, 0);
-    for (int y = 0; y < H; ++y) {
-        for (int x = 0; x < W; ++x) {
+//    ColorMap = gauss_blur(ColorMap, 0);
+    for (int y = 0; y < Config::get().height; ++y) {
+        for (int x = 0; x < Config::get().width; ++x) {
             if (!SamplesCount[x][y]) {
                 continue;
             }
@@ -395,5 +393,5 @@ int main() {
                   to_string(now->tm_mday) + '-' + to_string(now->tm_hour) + '-' + to_string(now->tm_min) + '-' +
                   to_string(now->tm_sec) + "  " + to_string(end_time - start_time);
     image.save_image(date + ".bmp");
-//    image.save_image("result.bmp");
+    image.save_image("result.bmp");
 }
