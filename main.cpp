@@ -161,6 +161,10 @@ public:
     vector<vector<int> > &SamplesCount;
     LightMaterial(vector<vector<vec3> > &CM, vector<vector<int> > &SC, vec3 col) :ColorMap(CM), SamplesCount(SC), BaseMaterial(col){};
     void process(Ray &ray, vec4 pi, vec4 N) {
+        if (dot(ray.getDir(), N) < 0) {
+            ray.make_invalid();
+            return;
+        }
         ColorMap[ray.getCoords().x][ray.getCoords().y] += ray.getCol() * color;
         ++SamplesCount[ray.getCoords().x][ray.getCoords().y];
         ray.make_invalid();
