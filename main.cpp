@@ -217,9 +217,9 @@ class Triangle {
 private:
     std::array<vec4, 3> vertices;
     vec4 plane;
+    unique_ptr<BaseMaterial> material;
 
 public:
-    unique_ptr<BaseMaterial> material;
     Triangle(std::array<vec4, 3> a, unique_ptr<BaseMaterial> &&m): vertices(a), material(move(m)) {
         vec4 e1 = vertices[1] - vertices[0];
         vec4 e2 = vertices[2] - vertices[0];
@@ -229,6 +229,10 @@ public:
 
     vec4 getNormal() const {
         return vec4(plane.x, plane.y, plane.z, 0);
+    }
+
+    BaseMaterial &getMaterial() const {
+        return *material;
     }
 
     bool intersect(Ray &ray, float &t) const {
@@ -266,7 +270,7 @@ void traceRay(Ray &ray, const std::array<Triangle, 18> &triangles) {
     if (cur > -1) {
         vec4 pi = ray.getBegin() + ray.getDir() * t;
         vec4 N = triangles[cur].getNormal();
-        triangles[cur].material->process(ray, pi, N);
+        triangles[cur].getMaterial().process(ray, pi, N);
     } else {
         ray.make_invalid();
     }
