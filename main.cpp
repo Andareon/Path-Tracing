@@ -156,9 +156,10 @@ public:
 };
 
 class LightMaterial : public BaseMaterial {
-public:
+private:
     vector<vector<vec3> > &ColorMap;
     vector<vector<int> > &SamplesCount;
+public:
     LightMaterial(vector<vector<vec3> > &CM, vector<vector<int> > &SC, vec3 col) :ColorMap(CM), SamplesCount(SC), BaseMaterial(col){};
     void process(Ray &ray, vec4 pi, vec4 N) {
         if (dot(ray.getDir(), N) < 0) {
