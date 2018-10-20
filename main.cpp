@@ -391,7 +391,7 @@ int main(int argc, char* argv[]) {
     struct tm * now = localtime( & t );
     string date = to_string(now->tm_year + 1900) + '-' + to_string(now->tm_mon + 1) + '-' +
                   to_string(now->tm_mday) + '-' + to_string(now->tm_hour) + '-' + to_string(now->tm_min) + '-' +
-                  to_string(now->tm_sec) + "  " + to_string(end_time - start_time);
+                  to_string(now->tm_sec) + "  " + to_string(end_time - start_time) + "   " + to_string(Config::get().RAYS_PER_PIXEL);
     image.save_image(date + ".bmp");
     image.save_image("result.bmp");
 }
