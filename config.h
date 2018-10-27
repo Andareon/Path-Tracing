@@ -14,6 +14,7 @@ public:
     int width = 512;
     int RAYS_PER_PIXEL = 20;
     int MAX_RAY_REFLECTIONS = 8;
+    int median = 0;
     float EPS = 1e-6;
     float error = 0.001;
     static Config& get() {
@@ -47,6 +48,10 @@ public:
 
             if ((string)argv[i] == "-ERR") {
                 error = static_cast<float>(atof(argv[i + 1]));
+            }
+
+            if ((string)argv[i] == "-MEDIAN") {
+                median= atoi(argv[i + 1]);
             }
         }
     }

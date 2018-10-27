@@ -71,7 +71,34 @@ vec4 refract(vec4 dir, vec4 N, float n) {
     return dirT;
 }
 
+vector<vector<vec3> > median_filter(vector<vector<vec3> > ColorMap, int t) {
+    vector<vector<vec3> > Ans(Config::get().width, vector<vec3>(Config::get().height, vec3(0)));
+    for (int y = 0; y < Config::get().height; ++y) {
+        for (int x = 0; x < Config::get().width; ++x) {
+            vector<float> win_r;
+            vector<float> win_g;
+            vector<float> win_b;
+            for (int ii = -t; ii < t + 1; ++ii) {
+                for (int jj = -t; jj < t + 1; ++jj) {
+                    int i = std::max(std::min(ii + x, Config::get().width - 1), 0);
+                    int j = std::max(std::min(jj + y, Config::get().height - 1), 0);
+                    win_r.push_back(ColorMap[i][j].r);
+                    win_g.push_back(ColorMap[i][j].g);
+                    win_b.push_back(ColorMap[i][j].b);
+                }
+            }
+            sort(win_r.begin(), win_r.end());
+            Ans[x][y].r = win_r[t * t / 2];
 
+            sort(win_g.begin(), win_g.end());
+            Ans[x][y].g = win_g[t * t / 2];
+
+            sort(win_b.begin(), win_b.end());
+            Ans[x][y].b = win_b[t * t / 2];
+        }
+    }
+    return Ans;
+}
 
 class BaseMaterial {
 protected:
@@ -319,7 +346,7 @@ int main(int argc, char* argv[]) {
             #pragma omp parallel for num_threads(4)
             for (int x = 0; x < Config::get().width; ++x) {
                 float SampleCount = static_cast<float>(SamplesCount[x][y]);
-                if (i > 10) {
+                if (i > 10 && SampleCount) {
                     vec3 D = (Color2Map[x][y] / SampleCount - (ColorMap[x][y] / SampleCount) * (ColorMap[x][y] / SampleCount));
                     if (D.r < Config::get().error && D.g < Config::get().error && D.b < Config::get().error && (i % 4)) {
                         continue;
@@ -343,6 +370,7 @@ int main(int argc, char* argv[]) {
         if ((i + 1) % 30 == 0) {
             image.save_image("result.bmp");
         }
+        cout << i << endl;
     }
 
     for (int y = 0; y < Config::get().height; ++y) {
@@ -355,6 +383,9 @@ int main(int argc, char* argv[]) {
     }
 
 //    ColorMap = gauss_blur(ColorMap, 0);
+    if (Config::get().median) {
+        ColorMap = median_filter(ColorMap, 3);
+    }
     for (int y = 0; y < Config::get().height; ++y) {
         for (int x = 0; x < Config::get().width; ++x) {
             if (!SamplesCount[x][y]) {
