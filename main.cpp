@@ -2,6 +2,7 @@
 #include <random>
 #include <ctime>
 #include <cmath>
+#include <chrono>
 
 #include "bitmap_image.hpp"
 #include "glm/geometric.hpp"
@@ -271,7 +272,9 @@ void traceRay(Ray &ray, const std::array<Triangle, 18> &triangles) {
 
 
 int main(int argc, char* argv[]) {
-    unsigned int start_time = clock();
+
+    std::chrono::milliseconds start_time = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch());
 
     Config::get().set_config(argc, argv);
 
@@ -403,12 +406,13 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    unsigned int end_time = clock();
+    std::chrono::milliseconds end_time = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch());
     time_t t = time(0);
     struct tm * now = localtime( & t );
     string date = to_string(now->tm_year + 1900) + '-' + to_string(now->tm_mon + 1) + '-' +
                   to_string(now->tm_mday) + '-' + to_string(now->tm_hour) + '-' + to_string(now->tm_min) + '-' +
-                  to_string(now->tm_sec) + "  " + to_string(end_time - start_time) + "   " + to_string(Config::get().RAYS_PER_PIXEL);
+                  to_string(now->tm_sec) + "  " + to_string((end_time - start_time).count()) + "   " + to_string(Config::get().RAYS_PER_PIXEL);
     image.save_image(date + ".bmp");
     image.save_image("result.bmp");
 }
