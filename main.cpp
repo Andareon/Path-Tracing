@@ -131,7 +131,9 @@ public:
             return;
         }
 
-        vec4 rnd = normalize(vec4(distribution(generator), distribution(generator), distribution(generator), 0));
+        float xi1 = distribution(generator) + 0.5,
+              xi2 = distribution(generator) + 0.5;
+        vec4 rnd = normalize(vec4(sqrt(xi1) * cos(2 * PI * xi2), sqrt(xi1) * sin(2 * PI * xi2), sqrt(1 - xi1), 0));
         if (dot(N, rnd) < 0) {
             rnd *= -1;
         }
