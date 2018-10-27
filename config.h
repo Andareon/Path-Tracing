@@ -1,7 +1,7 @@
-using namespace std;
-
 #ifndef RAY_TRACING_CONFIG_H
 #define RAY_TRACING_CONFIG_H
+
+using namespace std;
 
 class Config {
 private:
@@ -15,6 +15,7 @@ public:
     int RAYS_PER_PIXEL = 20;
     int MAX_RAY_REFLECTIONS = 8;
     float EPS = 1e-6;
+    float error = 0.001;
     static Config& get() {
 
         static Config instance;
@@ -42,6 +43,10 @@ public:
 
             if ((string)argv[i] == "-EPS") {
                 EPS = static_cast<float>(atof(argv[i + 1]));
+            }
+
+            if ((string)argv[i] == "-ERR") {
+                error = static_cast<float>(atof(argv[i + 1]));
             }
         }
     }

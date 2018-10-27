@@ -118,15 +118,17 @@ public:
 class LightMaterial : public BaseMaterial {
 private:
     vector<vector<vec3> > &ColorMap;
+    vector<vector<vec3> > &Color2Map;
     vector<vector<int> > &SamplesCount;
 public:
-    LightMaterial(vector<vector<vec3> > &CM, vector<vector<int> > &SC, vec3 col) :ColorMap(CM), SamplesCount(SC), BaseMaterial(col){};
+    LightMaterial(vector<vector<vec3> > &CM, vector<vector<vec3> > &C2M, vector<vector<int> > &SC, vec3 col) :ColorMap(CM), Color2Map(C2M), SamplesCount(SC), BaseMaterial(col){};
     void process(Ray &ray, vec4 pi, vec4 N) {
         if (dot(ray.getDir(), N) < 0) {
             ray.make_invalid();
             return;
         }
         ColorMap[ray.getCoords().x][ray.getCoords().y] += ray.getCol() * color;
+        Color2Map[ray.getCoords().x][ray.getCoords().y] += (ray.getCol() * color) * (ray.getCol() * color);
         ++SamplesCount[ray.getCoords().x][ray.getCoords().y];
         ray.make_invalid();
     }
@@ -245,6 +247,7 @@ int main(int argc, char* argv[]) {
     Config::get().set_config(argc, argv);
 
     vector<vector<vec3> > ColorMap(Config::get().width, vector<vec3>(Config::get().height, vec3(0)));
+    vector<vector<vec3> > Color2Map(Config::get().width, vector<vec3>(Config::get().height, vec3(0)));
     vector<vector<int> > SamplesCount(Config::get().width, vector<int>(Config::get().height, 0));
 
     float cube_a = 10;
@@ -281,10 +284,10 @@ int main(int argc, char* argv[]) {
                                                                  vec4(-cube_a, -cube_a, -cube_a, 1)}, make_unique<DiffuseMaterial>(white)),
 
                                                         Triangle({vec4(-2, cube_a - 1, 2, 1), vec4(2, cube_a - 1, 2, 1),
-                                                                 vec4(2, cube_a - 1, -2, 1)}, make_unique<LightMaterial>(ColorMap, SamplesCount, white)),
+                                                                 vec4(2, cube_a - 1, -2, 1)}, make_unique<LightMaterial>(ColorMap, Color2Map, SamplesCount, white)),
 
                                                         Triangle({vec4(-2, cube_a - 1, 2, 1), vec4(2, cube_a - 1, -2, 1),
-                                                                 vec4(-2, cube_a - 1, -2, 1)}, make_unique<LightMaterial>(ColorMap, SamplesCount, white)),
+                                                                 vec4(-2, cube_a - 1, -2, 1)}, make_unique<LightMaterial>(ColorMap, Color2Map, SamplesCount, white)),
 
                                                         Triangle({vec4(5 + 0, pir_a, 0, 1), vec4(5 + -pir_a, -1, pir_a, 1),
                                                                   vec4(5 + pir_a, -1, pir_a, 1)}, make_unique<TransparentMaterial>(yellow, 1.25)),
@@ -315,6 +318,13 @@ int main(int argc, char* argv[]) {
         for (int y = 0; y < Config::get().height; ++y) {
             #pragma omp parallel for num_threads(4)
             for (int x = 0; x < Config::get().width; ++x) {
+                float SampleCount = static_cast<float>(SamplesCount[x][y]);
+                if (i > 10) {
+                    vec3 D = (Color2Map[x][y] / SampleCount - (ColorMap[x][y] / SampleCount) * (ColorMap[x][y] / SampleCount));
+                    if (D.r < Config::get().error && D.g < Config::get().error && D.b < Config::get().error && (i % 4)) {
+                        continue;
+                    }
+                }
                 vec4 dir = vec4((x - Config::get().width / 2 + distribution(generator)) / Config::get().width,
                                 -(y - Config::get().height / 2 + distribution(generator)) / Config::get().height,
                                 1, 0);
@@ -322,9 +332,9 @@ int main(int argc, char* argv[]) {
                 while (ray.is_valid()) {
                     traceRay(ray, triangles);
                 }
-                if ((i + 1) % 30 == 0) {
+                if (i % 32 == 0) {
                     if (SamplesCount[x][y]) {
-                        vec3 c = pow(ColorMap[x][y] / static_cast<float>(SamplesCount[x][y]), vec3(1/2.2)) * 255.0f;
+                        vec3 c = pow(ColorMap[x][y] / SampleCount, vec3(1/2.2)) * 255.0f;
                         image.set_pixel(x, y, c.r, c.g, c.b);
                     }
                 }

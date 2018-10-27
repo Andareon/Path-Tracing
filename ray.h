@@ -1,9 +1,9 @@
+#ifndef RAY_TRACING_RAY_H
+#define RAY_TRACING_RAY_H
+
 #include "glm/geometric.hpp"
 
 using namespace glm;
-
-#ifndef RAY_TRACING_RAY_H
-#define RAY_TRACING_RAY_H
 
 class Ray {
 private:
