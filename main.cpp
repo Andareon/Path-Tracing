@@ -212,7 +212,7 @@ private:
     unique_ptr<BaseMaterial> material;
 
 public:
-    Triangle(std::array<vec4, 3> a, unique_ptr<BaseMaterial> &&m): vertices(a), material(move(m)) {
+    Triangle(std::array<vec4, 3> a, BaseMaterial* m): vertices(a), material(move(m)) {
         vec4 e1 = vertices[1] - vertices[0];
         vec4 e2 = vertices[2] - vertices[0];
         plane = normalize(cross(e1, e2));
@@ -278,63 +278,68 @@ int main(int argc, char* argv[]) {
     vector<vector<vec3> > ColorMap(Config::get().width, vector<vec3>(Config::get().height, vec3(0)));
     vector<vector<vec3> > Color2Map(Config::get().width, vector<vec3>(Config::get().height, vec3(0)));
     vector<vector<int> > SamplesCount(Config::get().width, vector<int>(Config::get().height, 0));
+    vector<BaseMaterial*> Materials = {new DiffuseMaterial(white),
+                                       new DiffuseMaterial(red),
+                                       new DiffuseMaterial(green),
+                                       new LightMaterial(ColorMap, Color2Map, SamplesCount, white),
+                                       new TransparentMaterial(yellow, 1.25)};
 
     float cube_a = 10;
     float pir_a = 4;
     const int triangles_count = 18;
     const array<Triangle, triangles_count> triangles = {Triangle({vec4(-cube_a, cube_a, cube_a, 1), vec4(cube_a, cube_a, cube_a, 1),
-                                                                 vec4(cube_a, -cube_a, cube_a, 1)}, make_unique<DiffuseMaterial>(white)),
+                                                                 vec4(cube_a, -cube_a, cube_a, 1)}, Materials[0]),
 
                                                         Triangle({vec4(-cube_a, cube_a, cube_a, 1), vec4(cube_a, -cube_a, cube_a, 1),
-                                                                 vec4(-cube_a, -cube_a, cube_a, 1)}, make_unique<DiffuseMaterial>(white)),
+                                                                 vec4(-cube_a, -cube_a, cube_a, 1)}, Materials[0]),
 
                                                         Triangle({vec4(-cube_a, cube_a, -cube_a, 1), vec4(-cube_a, cube_a, cube_a, 1),
-                                                                 vec4(-cube_a, -cube_a, cube_a, 1)}, make_unique<DiffuseMaterial>(red)),
+                                                                 vec4(-cube_a, -cube_a, cube_a, 1)}, Materials[1]),
 
                                                         Triangle({vec4(-cube_a, cube_a, -cube_a, 1), vec4(-cube_a, -cube_a, cube_a, 1),
-                                                                 vec4(-cube_a, -cube_a, -cube_a, 1)}, make_unique<DiffuseMaterial>(red)),
+                                                                 vec4(-cube_a, -cube_a, -cube_a, 1)}, Materials[1]),
 
                                                         Triangle({vec4(cube_a, cube_a, -cube_a, 1), vec4(cube_a, -cube_a, cube_a, 1),
-                                                                 vec4(cube_a, cube_a, cube_a, 1)}, make_unique<DiffuseMaterial>(green)),
+                                                                 vec4(cube_a, cube_a, cube_a, 1)}, Materials[2]),
 
                                                         Triangle({vec4(cube_a, cube_a, -cube_a, 1), vec4(cube_a, -cube_a, -cube_a, 1),
-                                                                 vec4(cube_a, -cube_a, cube_a, 1)}, make_unique<DiffuseMaterial>(green)),
+                                                                 vec4(cube_a, -cube_a, cube_a, 1)}, Materials[2]),
 
                                                         Triangle({vec4(-cube_a, cube_a, cube_a, 1), vec4(cube_a, cube_a, -cube_a, 1),
-                                                                 vec4(cube_a, cube_a, cube_a, 1)}, make_unique<DiffuseMaterial>(white)),
+                                                                 vec4(cube_a, cube_a, cube_a, 1)}, Materials[0]),
 
                                                         Triangle({vec4(-cube_a, cube_a, cube_a, 1), vec4(-cube_a, cube_a, -cube_a, 1),
-                                                                 vec4(cube_a, cube_a, -cube_a, 1)}, make_unique<DiffuseMaterial>(white)),
+                                                                 vec4(cube_a, cube_a, -cube_a, 1)}, Materials[0]),
 
                                                         Triangle({vec4(-cube_a, -cube_a, cube_a, 1), vec4(cube_a, -cube_a, cube_a, 1),
-                                                                 vec4(cube_a, -cube_a, -cube_a, 1)}, make_unique<DiffuseMaterial>(white)),
+                                                                 vec4(cube_a, -cube_a, -cube_a, 1)}, Materials[0]),
 
                                                         Triangle({vec4(-cube_a, -cube_a, cube_a, 1), vec4(cube_a, -cube_a, -cube_a, 1),
-                                                                 vec4(-cube_a, -cube_a, -cube_a, 1)}, make_unique<DiffuseMaterial>(white)),
+                                                                 vec4(-cube_a, -cube_a, -cube_a, 1)}, Materials[0]),
 
                                                         Triangle({vec4(-2, cube_a - 1, 2, 1), vec4(2, cube_a - 1, 2, 1),
-                                                                 vec4(2, cube_a - 1, -2, 1)}, make_unique<LightMaterial>(ColorMap, Color2Map, SamplesCount, white)),
+                                                                 vec4(2, cube_a - 1, -2, 1)}, Materials[3]),
 
                                                         Triangle({vec4(-2, cube_a - 1, 2, 1), vec4(2, cube_a - 1, -2, 1),
-                                                                 vec4(-2, cube_a - 1, -2, 1)}, make_unique<LightMaterial>(ColorMap, Color2Map, SamplesCount, white)),
+                                                                 vec4(-2, cube_a - 1, -2, 1)}, Materials[3]),
 
                                                         Triangle({vec4(5 + 0, pir_a, 0, 1), vec4(5 + -pir_a, -1, pir_a, 1),
-                                                                  vec4(5 + pir_a, -1, pir_a, 1)}, make_unique<TransparentMaterial>(yellow, 1.25)),
+                                                                  vec4(5 + pir_a, -1, pir_a, 1)}, Materials[4]),
 
                                                         Triangle({vec4(5 + 0, pir_a, 0, 1), vec4(5 + pir_a, -1, pir_a, 1),
-                                                                  vec4(5 + pir_a, -1, -pir_a, 1)}, make_unique<TransparentMaterial>(yellow, 1.25)),
+                                                                  vec4(5 + pir_a, -1, -pir_a, 1)}, Materials[4]),
 
                                                         Triangle({vec4(5 + 0, pir_a, 0, 1), vec4(5 + -pir_a, -1, -pir_a, 1),
-                                                                  vec4(5 + -pir_a, -1, pir_a, 1)}, make_unique<TransparentMaterial>(yellow, 1.25)),
+                                                                  vec4(5 + -pir_a, -1, pir_a, 1)}, Materials[4]),
 
                                                         Triangle({vec4(5 + 0, pir_a, 0, 1), vec4(5 + pir_a, -1, -pir_a, 1),
-                                                                  vec4(5 + -pir_a, -1, -pir_a, 1)}, make_unique<TransparentMaterial>(yellow, 1.25)),
+                                                                  vec4(5 + -pir_a, -1, -pir_a, 1)}, Materials[4]),
 
                                                         Triangle({vec4(5 + -pir_a, -1, pir_a, 1), vec4(5 + pir_a, -1, -pir_a, 1),
-                                                                  vec4(5 + pir_a, -1, pir_a, 1)}, make_unique<TransparentMaterial>(yellow, 1.25)),
+                                                                  vec4(5 + pir_a, -1, pir_a, 1)}, Materials[4]),
 
                                                         Triangle({vec4(5 + -pir_a, -1, pir_a, 1), vec4(5 + -pir_a, -1, -pir_a, 1),
-                                                                  vec4(5 + pir_a, -1, -pir_a, 1)}, make_unique<TransparentMaterial>(yellow, 1.25))};
+                                                                  vec4(5 + pir_a, -1, -pir_a, 1)}, Materials[4])};
 
 
 
