@@ -3,6 +3,7 @@
 #include <ctime>
 #include <cmath>
 #include <chrono>
+#include <stdio.h>
 
 #include "bitmap_image.hpp"
 #include "glm/geometric.hpp"
@@ -14,12 +15,12 @@ using namespace std;
 using namespace glm;
 
 static const vec3 white(1, 1, 1);
-static const vec3 red(1, 0.1, 0.1);
-static const vec3 blue(0.1, 0.1, 1);
-static const vec3 violet(1, 0.1, 1);
-static const vec3 yellow(1, 1, 0.1);
+static const vec3 red(1, 0, 0);
+static const vec3 blue(0, 0, 1);
+static const vec3 violet(1, 0, 1);
+static const vec3 yellow(1, 1, 0);
 static const vec3 black(0, 0, 0);
-static const vec3 green(0.1, 1, 0.1);
+static const vec3 green(0, 1, 0);
 static const vec3 gray(0.5, 0.5, 0.5);
 
 const float PI = 3.141593;
@@ -189,7 +190,6 @@ public:
     }
 };
 
-
 bool planeintersect(Ray &ray, float &t, vec4 plane) {
     vec4 o = ray.getBegin();
     vec4 d = ray.getDir();
@@ -208,11 +208,11 @@ bool planeintersect(Ray &ray, float &t, vec4 plane) {
 
 class Triangle {
 private:
-    std::array<vec4, 3> vertices;
     vec4 plane;
-    unique_ptr<BaseMaterial> material;
+    BaseMaterial* material;
 
 public:
+    std::array<vec4, 3> vertices;
     Triangle(std::array<vec4, 3> a, BaseMaterial* m): vertices(a), material(move(m)) {
         vec4 e1 = vertices[1] - vertices[0];
         vec4 e2 = vertices[2] - vertices[0];
@@ -222,6 +222,15 @@ public:
 
     vec4 getNormal() const {
         return vec4(plane.x, plane.y, plane.z, 0);
+    }
+
+    void setNormal(vec3 N) {
+        N = normalize(N);
+        plane.x = N.x;
+        plane.y = N.y;
+        plane.z = N.z;
+        plane.w = 0;
+        plane.w = -dot(plane, vertices[0]);
     }
 
     BaseMaterial &getMaterial() const {
@@ -251,25 +260,73 @@ public:
     }
 };
 
-void traceRay(Ray &ray, const std::array<Triangle, 18> &triangles) {
-    float t = INFINITY;
-    int triangles_count = triangles.size();
-    int i = 0, cur=-1;
-    for (i = 0; i < triangles_count; ++i) {
-        if (triangles[i].intersect(ray, t)) {
-            cur = i;
+class Scene {
+private:
+    vector<vec4> temp_vertices;
+    vector<vec2> temp_uvs;
+    vector<vec3> temp_normals;
+    vector<Triangle> triangles;
+public:
+
+    void LoadModel(const char *path, BaseMaterial *material) {
+        FILE *file = fopen(path, "r");
+        if (file == NULL) {
+            printf("Impossible to open the file !\n");
+            return;
+        }
+        while (1) {
+            char lineHeader[128];
+            int res = fscanf(file, "%s", lineHeader);
+            if (res == EOF)
+                break;
+            if (strcmp(lineHeader, "v") == 0) {
+                glm::vec4 vertex = vec4(1);
+                fscanf(file, "%f %f %f\n", &vertex.x, &vertex.y, &vertex.z);
+                temp_vertices.push_back(vertex);
+            } else if (strcmp(lineHeader, "vt") == 0) {
+                glm::vec2 uv;
+                fscanf(file, "%f %f\n", &uv.x, &uv.y);
+                temp_uvs.push_back(uv);
+            } else if (strcmp(lineHeader, "vn") == 0) {
+                glm::vec3 normal;
+                fscanf(file, "%f %f %f\n", &normal.x, &normal.y, &normal.z);
+                temp_normals.push_back(normal);
+            } else if (strcmp(lineHeader, "f") == 0) {
+                int vi1, vi2, vi3, uvi1, uvi2, uvi3, ni1, ni2, ni3;
+                int matches = fscanf(file, " %d/%d/%d %d/%d/%d %d/%d/%d\n", &vi1, &uvi1, &ni1, &vi2, &uvi2, &ni2, &vi3,
+                                     &uvi3, &ni3);
+                vi1--;
+                vi2--;
+                vi3--;
+                triangles.push_back(Triangle({temp_vertices[vi1], temp_vertices[vi2], temp_vertices[vi3]}, material));
+                triangles[triangles.size() - 1].setNormal(temp_normals[ni1 - 1]);
+            }
         }
     }
-    if (cur > -1) {
-        vec4 pi = ray.getBegin() + ray.getDir() * t;
-        vec4 N = triangles[cur].getNormal();
-        triangles[cur].getMaterial().process(ray, pi, N);
-    } else {
-        ray.make_invalid();
+
+    void AddTriangle(Triangle tr) {
+        triangles.push_back(tr);
     }
-}
 
 
+    void traceRay(Ray &ray) {
+        float t = INFINITY;
+        int triangles_count = triangles.size();
+        int i = 0, cur = -1;
+        for (i = 0; i < triangles_count; ++i) {
+            if (triangles[i].intersect(ray, t)) {
+                cur = i;
+            }
+        }
+        if (cur > -1) {
+            vec4 pi = ray.getBegin() + ray.getDir() * t;
+            vec4 N = triangles[cur].getNormal();
+            triangles[cur].getMaterial().process(ray, pi, N);
+        } else {
+            ray.make_invalid();
+        }
+    }
+};
 
 int main(int argc, char* argv[]) {
 
@@ -285,71 +342,55 @@ int main(int argc, char* argv[]) {
                                        new DiffuseMaterial(red),
                                        new DiffuseMaterial(green),
                                        new LightMaterial(ColorMap, Color2Map, SamplesCount, white),
-                                       new TransparentMaterial(yellow, 1.25)};
+                                       new TransparentMaterial(yellow, 1.25),
+                                       new MirrorMaterial(white)};
+
+    Scene scene;
+    scene.LoadModel("../1.obj", Materials[2]);
 
     float cube_a = 10;
-    float pir_a = 4;
-    const int triangles_count = 18;
-    const array<Triangle, triangles_count> triangles = {Triangle({vec4(-cube_a, cube_a, cube_a, 1), vec4(cube_a, cube_a, cube_a, 1),
-                                                                 vec4(cube_a, -cube_a, cube_a, 1)}, Materials[0]),
+    scene.AddTriangle(Triangle({vec4(-cube_a, cube_a, cube_a, 1), vec4(cube_a, cube_a, cube_a, 1),
+                                vec4(cube_a, -cube_a, cube_a, 1)}, Materials[0]));
 
-                                                        Triangle({vec4(-cube_a, cube_a, cube_a, 1), vec4(cube_a, -cube_a, cube_a, 1),
-                                                                 vec4(-cube_a, -cube_a, cube_a, 1)}, Materials[0]),
+    scene.AddTriangle(Triangle({vec4(-cube_a, cube_a, cube_a, 1), vec4(cube_a, -cube_a, cube_a, 1),
+                                vec4(-cube_a, -cube_a, cube_a, 1)}, Materials[0]));
 
-                                                        Triangle({vec4(-cube_a, cube_a, -cube_a, 1), vec4(-cube_a, cube_a, cube_a, 1),
-                                                                 vec4(-cube_a, -cube_a, cube_a, 1)}, Materials[1]),
+    scene.AddTriangle(Triangle({vec4(-cube_a, cube_a, -cube_a, 1), vec4(-cube_a, cube_a, cube_a, 1),
+                                vec4(-cube_a, -cube_a, cube_a, 1)}, Materials[1]));
 
-                                                        Triangle({vec4(-cube_a, cube_a, -cube_a, 1), vec4(-cube_a, -cube_a, cube_a, 1),
-                                                                 vec4(-cube_a, -cube_a, -cube_a, 1)}, Materials[1]),
+    scene.AddTriangle(Triangle({vec4(-cube_a, cube_a, -cube_a, 1), vec4(-cube_a, -cube_a, cube_a, 1),
+                                vec4(-cube_a, -cube_a, -cube_a, 1)}, Materials[1]));
 
-                                                        Triangle({vec4(cube_a, cube_a, -cube_a, 1), vec4(cube_a, -cube_a, cube_a, 1),
-                                                                 vec4(cube_a, cube_a, cube_a, 1)}, Materials[2]),
+    scene.AddTriangle(Triangle({vec4(cube_a, cube_a, -cube_a, 1), vec4(cube_a, -cube_a, cube_a, 1),
+                                vec4(cube_a, cube_a, cube_a, 1)}, Materials[2]));
 
-                                                        Triangle({vec4(cube_a, cube_a, -cube_a, 1), vec4(cube_a, -cube_a, -cube_a, 1),
-                                                                 vec4(cube_a, -cube_a, cube_a, 1)}, Materials[2]),
+    scene.AddTriangle(Triangle({vec4(cube_a, cube_a, -cube_a, 1), vec4(cube_a, -cube_a, -cube_a, 1),
+                                vec4(cube_a, -cube_a, cube_a, 1)}, Materials[2]));
 
-                                                        Triangle({vec4(-cube_a, cube_a, cube_a, 1), vec4(cube_a, cube_a, -cube_a, 1),
-                                                                 vec4(cube_a, cube_a, cube_a, 1)}, Materials[0]),
+    scene.AddTriangle(Triangle({vec4(-cube_a, cube_a, cube_a, 1), vec4(cube_a, cube_a, -cube_a, 1),
+                                vec4(cube_a, cube_a, cube_a, 1)}, Materials[0]));
 
-                                                        Triangle({vec4(-cube_a, cube_a, cube_a, 1), vec4(-cube_a, cube_a, -cube_a, 1),
-                                                                 vec4(cube_a, cube_a, -cube_a, 1)}, Materials[0]),
+    scene.AddTriangle(Triangle({vec4(-cube_a, cube_a, cube_a, 1), vec4(-cube_a, cube_a, -cube_a, 1),
+                                vec4(cube_a, cube_a, -cube_a, 1)}, Materials[0]));
 
-                                                        Triangle({vec4(-cube_a, -cube_a, cube_a, 1), vec4(cube_a, -cube_a, cube_a, 1),
-                                                                 vec4(cube_a, -cube_a, -cube_a, 1)}, Materials[0]),
+    scene.AddTriangle(Triangle({vec4(-cube_a, -cube_a, cube_a, 1), vec4(cube_a, -cube_a, cube_a, 1),
+                                vec4(cube_a, -cube_a, -cube_a, 1)}, Materials[0]));
 
-                                                        Triangle({vec4(-cube_a, -cube_a, cube_a, 1), vec4(cube_a, -cube_a, -cube_a, 1),
-                                                                 vec4(-cube_a, -cube_a, -cube_a, 1)}, Materials[0]),
+    scene.AddTriangle(Triangle({vec4(-cube_a, -cube_a, cube_a, 1), vec4(cube_a, -cube_a, -cube_a, 1),
+                                vec4(-cube_a, -cube_a, -cube_a, 1)}, Materials[0]));
 
-                                                        Triangle({vec4(-2, cube_a - 1, 2, 1), vec4(2, cube_a - 1, 2, 1),
-                                                                 vec4(2, cube_a - 1, -2, 1)}, Materials[3]),
+    scene.AddTriangle(Triangle({vec4(-5, cube_a - 1, 5, 1), vec4(5, cube_a - 1, 5, 1),
+                                vec4(5, cube_a - 1, -5, 1)}, Materials[3]));
 
-                                                        Triangle({vec4(-2, cube_a - 1, 2, 1), vec4(2, cube_a - 1, -2, 1),
-                                                                 vec4(-2, cube_a - 1, -2, 1)}, Materials[3]),
+    scene.AddTriangle(Triangle({vec4(-5, cube_a - 1, 5, 1), vec4(5, cube_a - 1, -5, 1),
+                                vec4(-5, cube_a - 1, -5, 1)}, Materials[3]));
 
-                                                        Triangle({vec4(5 + 0, pir_a, 0, 1), vec4(5 + -pir_a, -1, pir_a, 1),
-                                                                  vec4(5 + pir_a, -1, pir_a, 1)}, Materials[4]),
-
-                                                        Triangle({vec4(5 + 0, pir_a, 0, 1), vec4(5 + pir_a, -1, pir_a, 1),
-                                                                  vec4(5 + pir_a, -1, -pir_a, 1)}, Materials[4]),
-
-                                                        Triangle({vec4(5 + 0, pir_a, 0, 1), vec4(5 + -pir_a, -1, -pir_a, 1),
-                                                                  vec4(5 + -pir_a, -1, pir_a, 1)}, Materials[4]),
-
-                                                        Triangle({vec4(5 + 0, pir_a, 0, 1), vec4(5 + pir_a, -1, -pir_a, 1),
-                                                                  vec4(5 + -pir_a, -1, -pir_a, 1)}, Materials[4]),
-
-                                                        Triangle({vec4(5 + -pir_a, -1, pir_a, 1), vec4(5 + pir_a, -1, -pir_a, 1),
-                                                                  vec4(5 + pir_a, -1, pir_a, 1)}, Materials[4]),
-
-                                                        Triangle({vec4(5 + -pir_a, -1, pir_a, 1), vec4(5 + -pir_a, -1, -pir_a, 1),
-                                                                  vec4(5 + pir_a, -1, -pir_a, 1)}, Materials[4])};
 
 
 
     bitmap_image image(Config::get().width, Config::get().height);
 
     image.clear();
-
 
     for (int i = 0; i < Config::get().RAYS_PER_PIXEL; ++i) {
         for (int y = 0; y < Config::get().height; ++y) {
@@ -367,7 +408,7 @@ int main(int argc, char* argv[]) {
                                 1, 0);
                 Ray ray = Ray(vec4(0, 0, -20, 1), dir, 0, ivec2(x, y));
                 while (ray.is_valid()) {
-                    traceRay(ray, triangles);
+                    scene.traceRay(ray);
                 }
                 if (i % 32 == 0) {
                     if (SamplesCount[x][y]) {
@@ -377,8 +418,9 @@ int main(int argc, char* argv[]) {
                 }
             }
         }
-        if ((i + 1) % 30 == 0) {
+        if (i % 32 == 0) {
             image.save_image("result.bmp");
+            cout << "  ";
         }
         cout << i << endl;
     }
