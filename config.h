@@ -1,8 +1,6 @@
 #ifndef RAY_TRACING_CONFIG_H
 #define RAY_TRACING_CONFIG_H
 
-using namespace std;
-
 class Config {
 private:
     Config(){}
@@ -51,7 +49,7 @@ public:
             }
 
             if ((string)argv[i] == "-MEDIAN") {
-                median= atoi(argv[i + 1]);
+                median = atoi(argv[i + 1]);
             }
         }
     }
