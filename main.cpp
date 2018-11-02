@@ -379,11 +379,11 @@ int main(int argc, char* argv[]) {
     scene.AddTriangle(Triangle({vec4(-cube_a, -cube_a, cube_a, 1), vec4(cube_a, -cube_a, -cube_a, 1),
                                 vec4(-cube_a, -cube_a, -cube_a, 1)}, Materials[0]));
 
-    scene.AddTriangle(Triangle({vec4(-5, cube_a - 1, 5, 1), vec4(5, cube_a - 1, 5, 1),
-                                vec4(5, cube_a - 1, -5, 1)}, Materials[3]));
+    scene.AddTriangle(Triangle({vec4(-1, cube_a - 1, 1, 1), vec4(1, cube_a - 1, 1, 1),
+                                vec4(1, cube_a - 1, -1, 1)}, Materials[3]));
 
-    scene.AddTriangle(Triangle({vec4(-5, cube_a - 1, 5, 1), vec4(5, cube_a - 1, -5, 1),
-                                vec4(-5, cube_a - 1, -5, 1)}, Materials[3]));
+    scene.AddTriangle(Triangle({vec4(-1, cube_a - 1, 1, 1), vec4(1, cube_a - 1, -1, 1),
+                                vec4(-1, cube_a - 1, -1, 1)}, Materials[3]));
 
 
 
