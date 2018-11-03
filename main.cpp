@@ -410,7 +410,7 @@ int main(int argc, char* argv[]) {
                 while (ray.is_valid()) {
                     scene.traceRay(ray);
                 }
-                if (i % 32 == 0) {
+                if (i % Config::get().update == 0) {
                     if (SamplesCount[x][y]) {
                         vec3 c = pow(ColorMap[x][y] / SampleCount, vec3(1/2.2)) * 255.0f;
                         image.set_pixel(x, y, c.r, c.g, c.b);
@@ -418,7 +418,7 @@ int main(int argc, char* argv[]) {
                 }
             }
         }
-        if (i % 32 == 0) {
+        if (i % Config::get().update == 0) {
             image.save_image("result.bmp");
             std::cerr << "Image update" << endl;
         }

@@ -15,6 +15,7 @@ public:
     int median = 0;
     float EPS = 1e-6;
     float error = 0.001;
+    int update = 32;
     static Config& get() {
 
         static Config instance;
@@ -50,6 +51,10 @@ public:
 
             if ((std::string)argv[i] == "-MEDIAN") {
                 median = std::atoi(argv[i + 1]);
+            }
+
+            if ((std::string)argv[i] == "-UPDATE") {
+                update = std::atoi(argv[i + 1]);
             }
         }
     }
