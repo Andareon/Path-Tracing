@@ -420,9 +420,9 @@ int main(int argc, char* argv[]) {
         }
         if (i % 32 == 0) {
             image.save_image("result.bmp");
-            cout << "  ";
+            std::cerr << "Image update" << endl;
         }
-        cout << i << endl;
+        std::cerr << i + 1 << " rays per pixel were sent" << endl;
     }
 
     for (int y = 0; y < Config::get().height; ++y) {
