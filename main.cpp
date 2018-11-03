@@ -201,9 +201,9 @@ class Triangle {
 private:
     vec4 plane;
     BaseMaterial* material;
+    std::array<vec4, 3> vertices;
 
 public:
-    std::array<vec4, 3> vertices;
     Triangle(std::array<vec4, 3> a, BaseMaterial* m): vertices(a), material(move(m)) {
         vec4 e1 = vertices[1] - vertices[0];
         vec4 e2 = vertices[2] - vertices[0];
