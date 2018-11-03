@@ -290,7 +290,7 @@ public:
                 vi2--;
                 vi3--;
                 triangles.push_back(Triangle({temp_vertices[vi1], temp_vertices[vi2], temp_vertices[vi3]}, material));
-                triangles[triangles.size() - 1].setNormal(temp_normals[ni1 - 1]);
+                triangles.back().setNormal(temp_normals[ni1 - 1]);
             }
         }
     }
