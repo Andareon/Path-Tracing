@@ -39,9 +39,9 @@ vector<vector<vec3> > gauss_blur(vector<vector<vec3> > ColorMap, float r) {
             float wsum = 0;
             for (int iy = i - rs; iy <= i + rs; ++iy) {
                 for (int ix = j - rs; ix <= j + rs; ++ix) {
-                    int x = std::min(Config::get().width-1, std::max(0, ix));
-                    int y = std::min(Config::get().height-1, std::max(0, iy));
-                    int dsq = (ix-j)*(ix-j)+(iy-i)*(iy-i);
+                    int x = std::min(Config::get().width - 1, std::max(0, ix));
+                    int y = std::min(Config::get().height- 1, std::max(0, iy));
+                    int dsq = (ix - j) * (ix - j) + (iy - i) * (iy - i);
                     float wght = exp(-dsq / (2 * r * r)) / (PI * 2 * r * r);
                     val += ColorMap[x][y] * wght;
                     wsum += wght;
