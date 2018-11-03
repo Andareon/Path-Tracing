@@ -246,7 +246,7 @@ public:
         if (abs(full_square - small_square_1 - small_square_2 - small_square_3) > Config::get().EPS) {
             return false;
         }
-            t = newT;
+        t = newT;
         return true;
     }
 };
