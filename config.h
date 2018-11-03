@@ -24,32 +24,32 @@ public:
 
     void set_config(int argc, char* argv[]) {
         for (int i = 1; i < argc - 1; i += 2) {
-            if ((string)argv[i] == "-H") {
-                height = atoi(argv[i + 1]);
+            if ((std::string)argv[i] == "-H") {
+                height = std::atoi(argv[i + 1]);
             }
 
-            if ((string)argv[i] == "-W") {
-                width = atoi(argv[i + 1]);
+            if ((std::string)argv[i] == "-W") {
+                width = std::atoi(argv[i + 1]);
             }
 
-            if ((string)argv[i] == "-RPP") {
-                RAYS_PER_PIXEL = atoi(argv[i + 1]);
+            if ((std::string)argv[i] == "-RPP") {
+                RAYS_PER_PIXEL = std::atoi(argv[i + 1]);
             }
 
-            if ((string)argv[i] == "-MRR") {
-                MAX_RAY_REFLECTIONS = atoi(argv[i + 1]);
+            if ((std::string)argv[i] == "-MRR") {
+                MAX_RAY_REFLECTIONS = std::atoi(argv[i + 1]);
             }
 
-            if ((string)argv[i] == "-EPS") {
-                EPS = static_cast<float>(atof(argv[i + 1]));
+            if ((std::string)argv[i] == "-EPS") {
+                EPS = static_cast<float>(std::atof(argv[i + 1]));
             }
 
-            if ((string)argv[i] == "-ERR") {
-                error = static_cast<float>(atof(argv[i + 1]));
+            if ((std::string)argv[i] == "-ERR") {
+                error = static_cast<float>(std::atof(argv[i + 1]));
             }
 
-            if ((string)argv[i] == "-MEDIAN") {
-                median = atoi(argv[i + 1]);
+            if ((std::string)argv[i] == "-MEDIAN") {
+                median = std::atoi(argv[i + 1]);
             }
         }
     }
