@@ -14,15 +14,6 @@
 using namespace std;
 using namespace glm;
 
-static const vec3 white(1, 1, 1);
-static const vec3 red(1, 0, 0);
-static const vec3 blue(0, 0, 1);
-static const vec3 violet(1, 0, 1);
-static const vec3 yellow(1, 1, 0);
-static const vec3 black(0, 0, 0);
-static const vec3 green(0, 1, 0);
-static const vec3 gray(0.5, 0.5, 0.5);
-
 const float PI = 3.141593;
 
 std::default_random_engine generator(time(0));
@@ -41,10 +32,10 @@ vec4 cross(vec4 a, vec4 b) {
 
 vector<vector<vec3> > gauss_blur(vector<vector<vec3> > ColorMap, float r) {
     int rs = ceil(r * 2.57);
-    vector<vector<vec3> > Ans(Config::get().width, vector<vec3>(Config::get().height, vec3(0)));
+    vector<vector<vec3> > Ans(Config::get().width, vector<vec3>(Config::get().height, vec3(0, 0, 0)));
     for (int i = 0; i < Config::get().height; ++i) {
         for (int j = 0; j < Config::get().width; ++j) {
-            vec3 val = vec3(0);
+            vec3 val = vec3(0, 0, 0);
             float wsum = 0;
             for (int iy = i - rs; iy <= i + rs; ++iy) {
                 for (int ix = j - rs; ix <= j + rs; ++ix) {
@@ -74,7 +65,7 @@ vec4 refract(vec4 dir, vec4 N, float n) {
 }
 
 vector<vector<vec3> > median_filter(vector<vector<vec3> > ColorMap, int t) {
-    vector<vector<vec3> > Ans(Config::get().width, vector<vec3>(Config::get().height, vec3(0)));
+    vector<vector<vec3> > Ans(Config::get().width, vector<vec3>(Config::get().height, vec3(0, 0, 0)));
     for (int y = 0; y < Config::get().height; ++y) {
         for (int x = 0; x < Config::get().width; ++x) {
             vector<float> win_r;
@@ -115,7 +106,7 @@ class MirrorMaterial : public BaseMaterial {
 public:
     MirrorMaterial(vec3 col) :BaseMaterial(col) {};
     void process(Ray &ray, vec4 pi, vec4 N) {
-        if (ray.getCol() == black) {
+        if (ray.getCol() == vec3(0, 0, 0)) {
             ray.make_invalid();
             return;
         }
@@ -128,7 +119,7 @@ class DiffuseMaterial : public BaseMaterial {
 public:
     DiffuseMaterial(vec3 col) :BaseMaterial(col) {};
     void process(Ray &ray, vec4 pi, vec4 N) {
-        if (ray.getCol() == black) {
+        if (ray.getCol() == vec3(0, 0, 0)) {
             ray.make_invalid();
             return;
         }
@@ -171,7 +162,7 @@ private:
 public:
     TransparentMaterial(vec3 col, float n) :BaseMaterial(col), n1(n){};
     void process(Ray &ray, vec4 pi, vec4 N) {
-        if (ray.getCol() == black) {
+        if (ray.getCol() == vec3(0, 0, 0)) {
             ray.make_invalid();
             return;
         }
@@ -180,7 +171,7 @@ public:
         vec3 col;
         if (dot(N, ray.getDir()) > 0) {
             dir = refract(ray.getDir(), -N, n1);
-            col = white;
+            col = vec3(1, 1, 1);
         } else {
             dir = refract(ray.getDir(), N, 1 / n1);
             col = color;
@@ -335,15 +326,15 @@ int main(int argc, char* argv[]) {
 
     Config::get().set_config(argc, argv);
 
-    vector<vector<vec3> > ColorMap(Config::get().width, vector<vec3>(Config::get().height, vec3(0)));
-    vector<vector<vec3> > Color2Map(Config::get().width, vector<vec3>(Config::get().height, vec3(0)));
+    vector<vector<vec3> > ColorMap(Config::get().width, vector<vec3>(Config::get().height, vec3(0, 0, 0)));
+    vector<vector<vec3> > Color2Map(Config::get().width, vector<vec3>(Config::get().height, vec3(0, 0, 0)));
     vector<vector<int> > SamplesCount(Config::get().width, vector<int>(Config::get().height, 0));
-    vector<BaseMaterial*> Materials = {new DiffuseMaterial(white),
-                                       new DiffuseMaterial(red),
-                                       new DiffuseMaterial(green),
-                                       new LightMaterial(ColorMap, Color2Map, SamplesCount, white),
-                                       new TransparentMaterial(yellow, 1.25),
-                                       new MirrorMaterial(white)};
+    vector<BaseMaterial*> Materials = {new DiffuseMaterial(vec3(1, 1, 1)),
+                                       new DiffuseMaterial(vec3(1, 0, 0)),
+                                       new DiffuseMaterial(vec3(0, 1, 0)),
+                                       new LightMaterial(ColorMap, Color2Map, SamplesCount, vec3(1, 1, 1)),
+                                       new TransparentMaterial(vec3(1, 1, 0), 1.25),
+                                       new MirrorMaterial(vec3(1, 1, 1))};
 
     Scene scene;
     scene.LoadModel("../1.obj", Materials[2]);
