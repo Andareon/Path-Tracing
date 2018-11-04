@@ -106,11 +106,6 @@ class MirrorMaterial : public BaseMaterial {
 public:
     MirrorMaterial(vec3 col) :BaseMaterial(col) {};
     void process(Ray &ray, vec4 pi, vec4 N) {
-        if (ray.getCol() == vec3(0, 0, 0)) {
-            ray.make_invalid();
-            return;
-        }
-
         ray.reflect(pi + N * Config::get().EPS, reflect(ray.getDir(), N), color);
     }
 };
@@ -119,11 +114,6 @@ class DiffuseMaterial : public BaseMaterial {
 public:
     DiffuseMaterial(vec3 col) :BaseMaterial(col) {};
     void process(Ray &ray, vec4 pi, vec4 N) {
-        if (ray.getCol() == vec3(0, 0, 0)) {
-            ray.make_invalid();
-            return;
-        }
-
         float xi1 = distribution(generator) + 0.5,
               xi2 = distribution(generator) + 0.5;
         vec4 rnd = normalize(vec4(sqrt(xi1) * cos(2 * PI * xi2), sqrt(xi1) * sin(2 * PI * xi2), sqrt(1 - xi1), 0));
@@ -162,11 +152,6 @@ private:
 public:
     TransparentMaterial(vec3 col, float n) :BaseMaterial(col), eta(n){};
     void process(Ray &ray, vec4 pi, vec4 N) {
-        if (ray.getCol() == vec3(0, 0, 0)) {
-            ray.make_invalid();
-            return;
-        }
-
         vec4 dir;
         vec3 col;
         if (dot(N, ray.getDir()) > 0) {

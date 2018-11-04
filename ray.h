@@ -37,7 +37,7 @@ public:
         depth++;
     }
 
-    bool is_valid() const {return depth < Config::get().MAX_RAY_REFLECTIONS;}
+    bool is_valid() const {return depth < Config::get().MAX_RAY_REFLECTIONS && col != glm::vec3(0);}
 
     void make_invalid() {depth = Config::get().MAX_RAY_REFLECTIONS;}
 
