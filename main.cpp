@@ -3,7 +3,7 @@
 #include <ctime>
 #include <cmath>
 #include <chrono>
-#include <stdio.h>
+#include <fstream>
 
 #include "bitmap_image.hpp"
 #include "glm/geometric.hpp"
@@ -242,32 +242,81 @@ public:
         vector<vec4> temp_vertices;
         vector<vec2> temp_uvs;
         vector<vec3> temp_normals;
-        FILE *file = fopen(path, "r");
-        if (file == NULL) {
+        FILE *fil = fopen(path, "r");
+        ifstream file(path);
+        if (fil == NULL) {
             printf("Impossible to open the file !\n");
             return;
         }
         while (1) {
-            char lineHeader[128];
-            int res = fscanf(file, "%s", lineHeader);
-            if (res == EOF)
+            if (file.eof())
                 break;
-            if (strcmp(lineHeader, "v") == 0) {
+            string first;
+            file >> first;
+            if (first == "v") {
                 glm::vec4 vertex = vec4(1);
-                fscanf(file, "%f %f %f\n", &vertex.x, &vertex.y, &vertex.z);
+                file >> vertex.x >> vertex.y >> vertex.z;
                 temp_vertices.push_back(vertex);
-            } else if (strcmp(lineHeader, "vt") == 0) {
+            } else if (first == "vt") {
                 glm::vec2 uv;
-                fscanf(file, "%f %f\n", &uv.x, &uv.y);
+                file >> uv.x >> uv.y;
                 temp_uvs.push_back(uv);
-            } else if (strcmp(lineHeader, "vn") == 0) {
+            } else if (first == "vn") {
                 glm::vec3 normal;
-                fscanf(file, "%f %f %f\n", &normal.x, &normal.y, &normal.z);
+                file >> normal.x >> normal.y >> normal.z;
                 temp_normals.push_back(normal);
-            } else if (strcmp(lineHeader, "f") == 0) {
-                int vi1, vi2, vi3, uvi1, uvi2, uvi3, ni1, ni2, ni3;
-                int matches = fscanf(file, " %d/%d/%d %d/%d/%d %d/%d/%d\n", &vi1, &uvi1, &ni1, &vi2, &uvi2, &ni2, &vi3,
-                                     &uvi3, &ni3);
+            } else if (first == "f") {
+                string f;
+                file >> f;
+                f += "//";
+                string fr[3] = {"0", "0", "0"};
+                int q = 0;
+                for (int i = 0; i < f.size(); ++i) {
+                    if (f[i] == '/') {
+                        ++q;
+                        if (q > 2) {
+                            break;
+                        }
+                    } else {
+                        fr[q] += f[i];
+                    }
+                }
+
+                string s;
+                file >> s;
+                s += "//";
+                string sc[3] = {"0", "0", "0"};
+                q = 0;
+                for (int i = 0; i < s.size(); ++i) {
+                    if (s[i] == '/') {
+                        ++q;
+                        if (q > 2) {
+                            break;
+                        }
+                    } else {
+                        sc[q] += s[i];
+                    }
+                }
+
+                string t;
+                file >> t;
+                t += "//";
+                string th[3] = {"0", "0", "0"};
+                q = 0;
+                for (int i = 0; i < t.size(); ++i) {
+                    if (t[i] == '/') {
+                        ++q;
+                        if (q > 2) {
+                            break;
+                        }
+                    } else {
+                        th[q] += t[i];
+                    }
+                }
+
+                int vi1 = atoi(fr[0].c_str()), vi2 = atoi(sc[0].c_str()), vi3 = atoi(th[0].c_str()),
+                uvi1 = atoi(fr[1].c_str()), uvi2 = atoi(sc[1].c_str()), uvi3 = atoi(th[1].c_str()),
+                ni1 = atoi(fr[2].c_str()), ni2 = atoi(sc[2].c_str()), ni3 = atoi(th[2].c_str());
                 vi1--;
                 vi2--;
                 vi3--;
