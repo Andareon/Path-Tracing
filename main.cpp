@@ -390,7 +390,7 @@ int main(int argc, char* argv[]) {
                 float SampleCount = static_cast<float>(SamplesCount[x][y]);
                 if (i > 10 && SampleCount) {
                     vec3 D = (Color2Map[x][y] / SampleCount - (ColorMap[x][y] / SampleCount) * (ColorMap[x][y] / SampleCount));
-                    if (D.r < Config::get().error && D.g < Config::get().error && D.b < Config::get().error && (i % 4)) {
+                    if ((i % 4) && D.r < Config::get().error && D.g < Config::get().error && D.b < Config::get().error) {
                         continue;
                     }
                 }
