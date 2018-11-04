@@ -10,14 +10,10 @@
 #include "config.h"
 #include "ray.h"
 
-
 using namespace std;
 using namespace glm;
 
 const float PI = 3.141593;
-
-default_random_engine generator(time(0));
-uniform_real_distribution<> distribution(-0.5f, 0.5f);
 
 float square(vec4 A, vec4 B, vec4 C) {
     vec3 a = B - A;
@@ -114,8 +110,10 @@ class DiffuseMaterial : public BaseMaterial {
 public:
     DiffuseMaterial(vec3 col) :BaseMaterial(col) {};
     void process(Ray &ray, vec4 pi, vec4 N) {
-        float xi1 = distribution(generator) + 0.5,
-              xi2 = distribution(generator) + 0.5;
+        static default_random_engine generator(time(0));
+        static uniform_real_distribution<> distribution(.0f, 1.f);
+        float xi1 = distribution(generator),
+              xi2 = distribution(generator);
         vec4 rnd = normalize(vec4(sqrt(xi1) * cos(2 * PI * xi2), sqrt(xi1) * sin(2 * PI * xi2), sqrt(1 - xi1), 0));
         if (dot(N, rnd) < 0) {
             rnd *= -1;
@@ -310,6 +308,9 @@ int main(int argc, char* argv[]) {
             chrono::system_clock::now().time_since_epoch());
 
     Config::get().set_config(argc, argv);
+    static default_random_engine generator(time(0));
+    static uniform_real_distribution<> distribution(-0.5f, 0.5f);
+
 
     vector<vector<vec3> > ColorMap(Config::get().width, vector<vec3>(Config::get().height, vec3(0, 0, 0)));
     vector<vector<vec3> > Color2Map(Config::get().width, vector<vec3>(Config::get().height, vec3(0, 0, 0)));
