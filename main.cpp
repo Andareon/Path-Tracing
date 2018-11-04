@@ -16,8 +16,8 @@ using namespace glm;
 
 const float PI = 3.141593;
 
-std::default_random_engine generator(time(0));
-std::uniform_real_distribution<> distribution(-0.5f, 0.5f);
+default_random_engine generator(time(0));
+uniform_real_distribution<> distribution(-0.5f, 0.5f);
 
 float square(vec4 A, vec4 B, vec4 C) {
     vec3 a = B - A;
@@ -184,7 +184,7 @@ public:
 bool planeintersect(Ray &ray, float &t, vec4 plane) {
     vec4 o = ray.getBegin();
     vec4 d = ray.getDir();
-    if (std::abs(dot(plane, d)) < Config::get().EPS) {
+    if (abs(dot(plane, d)) < Config::get().EPS) {
         return false;
     } else {
         float newT = -dot(o, plane) / dot(d, plane);
@@ -201,10 +201,10 @@ class Triangle {
 private:
     vec4 plane;
     BaseMaterial* material;
-    std::array<vec4, 3> vertices;
+    array<vec4, 3> vertices;
 
 public:
-    Triangle(std::array<vec4, 3> a, BaseMaterial* m): vertices(a), material(move(m)) {
+    Triangle(array<vec4, 3> a, BaseMaterial* m): vertices(a), material(move(m)) {
         vec4 e1 = vertices[1] - vertices[0];
         vec4 e2 = vertices[2] - vertices[0];
         plane = normalize(cross(e1, e2));
@@ -321,8 +321,8 @@ public:
 
 int main(int argc, char* argv[]) {
 
-    std::chrono::milliseconds start_time = std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::system_clock::now().time_since_epoch());
+    chrono::milliseconds start_time = chrono::duration_cast<chrono::milliseconds>(
+            chrono::system_clock::now().time_since_epoch());
 
     Config::get().set_config(argc, argv);
 
@@ -411,9 +411,9 @@ int main(int argc, char* argv[]) {
         }
         if (i % Config::get().update == 0) {
             image.save_image("result.bmp");
-            std::cerr << "Image update" << endl;
+            cerr << "Image update" << endl;
         }
-        std::cerr << i + 1 << " rays per pixel were sent" << endl;
+        cerr << i + 1 << " rays per pixel were sent" << endl;
     }
 
     for (int y = 0; y < Config::get().height; ++y) {
@@ -439,8 +439,8 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    std::chrono::milliseconds end_time = std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::system_clock::now().time_since_epoch());
+    chrono::milliseconds end_time = chrono::duration_cast<chrono::milliseconds>(
+            chrono::system_clock::now().time_since_epoch());
     time_t t = time(0);
     struct tm * now = localtime( & t );
     string date = to_string(now->tm_year + 1900) + '-' + to_string(now->tm_mon + 1) + '-' +
