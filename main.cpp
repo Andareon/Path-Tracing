@@ -319,10 +319,11 @@ int main(int argc, char* argv[]) {
                                        new DiffuseMaterial(vec3(0, 1, 0)),
                                        new LightMaterial(ColorMap, Color2Map, SamplesCount, vec3(1, 1, 1)),
                                        new TransparentMaterial(vec3(1, 1, 0), 1.25),
-                                       new MirrorMaterial(vec3(1, 1, 1))};
+                                       new MirrorMaterial(vec3(1, 1, 1)),
+                                       new DiffuseMaterial(vec3(1, 0, 1))};
 
     Scene scene;
-    scene.LoadModel("../1.obj", Materials[2]);
+    scene.LoadModel(Config::get().path, Materials[6]);
 
     float cube_a = 10;
     scene.AddTriangle(Triangle({vec4(-cube_a, cube_a, cube_a, 1), vec4(cube_a, cube_a, cube_a, 1),

@@ -16,6 +16,7 @@ public:
     float EPS = 1e-6;
     float error = 0.001;
     int update = 32;
+    const char *path = "../1.obj";
     static Config& get() {
 
         static Config instance;
@@ -55,6 +56,10 @@ public:
 
             if ((std::string)argv[i] == "-UPDATE") {
                 update = std::atoi(argv[i + 1]);
+            }
+
+            if ((std::string)argv[i] == "-PATH") {
+                path = argv[i + 1];
             }
         }
     }
