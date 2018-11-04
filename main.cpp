@@ -148,17 +148,17 @@ public:
 
 class TransparentMaterial : public BaseMaterial {
 private:
-    float eta;
+    float ref_in;
 public:
-    TransparentMaterial(vec3 col, float n) :BaseMaterial(col), eta(n){};
+    TransparentMaterial(vec3 col, float n) :BaseMaterial(col), ref_in(n){};
     void process(Ray &ray, vec4 pi, vec4 N) {
         vec4 dir;
         vec3 col;
         if (dot(N, ray.getDir()) > 0) {
-            dir = refract(ray.getDir(), -N, eta);
+            dir = refract(ray.getDir(), -N, ref_in);
             col = vec3(1, 1, 1);
         } else {
-            dir = refract(ray.getDir(), N, 1 / eta);
+            dir = refract(ray.getDir(), N, 1 / ref_in);
             col = color;
         }
 
