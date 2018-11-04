@@ -412,7 +412,7 @@ int main(int argc, char* argv[]) {
 
 //    ColorMap = gauss_blur(ColorMap, 0);
     if (Config::get().median) {
-        ColorMap = median_filter(ColorMap, 3);
+        ColorMap = median_filter(ColorMap, Config::get().median);
     }
     for (int y = 0; y < Config::get().height; ++y) {
         for (int x = 0; x < Config::get().width; ++x) {

@@ -12,7 +12,7 @@ public:
     int width = 512;
     int RAYS_PER_PIXEL = 20;
     int MAX_RAY_REFLECTIONS = 8;
-    bool median = 0;
+    int median = 0;
     float EPS = 1e-6;
     float error = 0.001;
     int update = 32;
@@ -50,7 +50,7 @@ public:
             }
 
             if ((std::string)argv[i] == "-MEDIAN") {
-                median = static_cast<bool>(std::atoi(argv[i + 1]));
+                median = std::atoi(argv[i + 1]);
             }
 
             if ((std::string)argv[i] == "-UPDATE") {
