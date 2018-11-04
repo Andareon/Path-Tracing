@@ -379,8 +379,8 @@ int main(int argc, char* argv[]) {
                         continue;
                     }
                 }
-                vec4 dir = vec4((x - Config::get().width / 2 + distribution(generator)) / Config::get().width,
-                                -(y - Config::get().height / 2 + distribution(generator)) / Config::get().height,
+                vec4 dir = vec4((static_cast<float>(x) - Config::get().width / 2 + distribution(generator)) / Config::get().width,
+                                -(static_cast<float>(y) - Config::get().height / 2 + distribution(generator)) / Config::get().height,
                                 1, 0);
                 Ray ray = Ray(vec4(0, 0, -20, 1), dir, 0, ivec2(x, y));
                 while (ray.is_valid()) {
