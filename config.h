@@ -13,6 +13,7 @@ public:
     int RAYS_PER_PIXEL = 20;
     int MAX_RAY_REFLECTIONS = 8;
     int median = 0;
+    int gauss = 0;
     float EPS = 1e-6;
     float error = 0.001;
     int update = 32;
@@ -60,6 +61,10 @@ public:
 
             if ((std::string)argv[i] == "-PATH") {
                 path = argv[i + 1];
+            }
+
+            if ((std::string)argv[i] == "-GAUSS") {
+                gauss = std::atoi(argv[i + 1]);
             }
         }
     }

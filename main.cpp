@@ -411,7 +411,10 @@ int main(int argc, char* argv[]) {
         }
     }
 
-//    ColorMap = gauss_blur(ColorMap, 0);
+
+    if (Config::get().gauss) {
+        ColorMap = gauss_blur(ColorMap, Config::get().gauss);
+    }
     if (Config::get().median) {
         ColorMap = median_filter(ColorMap, Config::get().median);
     }
