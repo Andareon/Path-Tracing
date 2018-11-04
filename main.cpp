@@ -236,13 +236,12 @@ public:
 
 class Scene {
 private:
-    vector<vec4> temp_vertices;
-    vector<vec2> temp_uvs;
-    vector<vec3> temp_normals;
     vector<Triangle> triangles;
 public:
-
     void LoadModel(const char *path, BaseMaterial *material) {
+        vector<vec4> temp_vertices;
+        vector<vec2> temp_uvs;
+        vector<vec3> temp_normals;
         FILE *file = fopen(path, "r");
         if (file == NULL) {
             printf("Impossible to open the file !\n");
