@@ -17,6 +17,7 @@ public:
     float EPS = 1e-6;
     float error = 0.001;
     int update = 32;
+    float gamma_kor = 1/2.2;
     const char *path = "../1.obj";
     static Config& get() {
 
@@ -67,6 +68,10 @@ public:
             if ((std::string)argv[i] == "-GAUSS") {
                 gauss = std::atoi(argv[i + 1]);
                 median = 0;
+            }
+
+            if ((std::string)argv[i] == "-GAMMA") {
+                gamma_kor = static_cast<float>(std::atof(argv[i + 1]));
             }
         }
     }

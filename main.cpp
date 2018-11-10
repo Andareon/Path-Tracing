@@ -408,7 +408,7 @@ int main(int argc, char* argv[]) {
                 }
                 if (i % Config::get().update == 0) {
                     if (SamplesCount[x][y]) {
-                        vec3 c = pow(ColorMap[x][y] / SampleCount, vec3(1/2.2)) * 255.0f;
+                        vec3 c = pow(ColorMap[x][y] / SampleCount, vec3(Config::get().gamma_kor)) * 255.0f;
                         image.set_pixel(x, y, c.r, c.g, c.b);
                     }
                 }
