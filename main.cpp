@@ -15,6 +15,16 @@ using namespace glm;
 
 const float PI = 3.141593;
 
+vector<string> split(string str, char sep) {
+    vector<string> ans;
+    int begin, end;
+    for (begin = 0, end = str.find(sep); end != std::string::npos; begin = end + 1, end = str.find(sep, begin)) {
+        ans.push_back(str.substr(begin, end - begin));
+    }
+    ans.push_back(str.substr(begin));
+    return ans;
+}
+
 float square(vec4 A, vec4 B, vec4 C) {
     vec3 a = B - A;
     vec3 b = C - A;
@@ -187,7 +197,7 @@ private:
     array<vec4, 3> vertices;
 
 public:
-    Triangle(array<vec4, 3> a, BaseMaterial* m): vertices(a), material(move(m)) {
+    Triangle(const array<vec4, 3> &a, BaseMaterial* m): vertices(a), material(move(m)) {
         vec4 e1 = vertices[1] - vertices[0];
         vec4 e2 = vertices[2] - vertices[0];
         plane = normalize(cross(e1, e2));
@@ -240,7 +250,7 @@ private:
 public:
     void LoadModel(const char *path, BaseMaterial *material) {
         vector<vec4> temp_vertices;
-        vector<vec2> temp_uvs;
+        vector<vec2> temp_texture_coords;
         vector<vec3> temp_normals;
         FILE *fil = fopen(path, "r");
         ifstream file(path);
@@ -260,68 +270,28 @@ public:
             } else if (first == "vt") {
                 glm::vec2 uv;
                 file >> uv.x >> uv.y;
-                temp_uvs.push_back(uv);
+                temp_texture_coords.push_back(uv);
             } else if (first == "vn") {
                 glm::vec3 normal;
                 file >> normal.x >> normal.y >> normal.z;
                 temp_normals.push_back(normal);
             } else if (first == "f") {
-                string f;
-                file >> f;
-                f += "//";
-                string fr[3] = {"0", "0", "0"};
-                int q = 0;
-                for (int i = 0; i < f.size(); ++i) {
-                    if (f[i] == '/') {
-                        ++q;
-                        if (q > 2) {
-                            break;
-                        }
-                    } else {
-                        fr[q] += f[i];
-                    }
+                int vertex_index[3];
+                int texture_coords_index[3];
+                int normal_index[3];
+                for (int i = 0; i < 3; ++i) {
+                    string cr;
+                    file >> cr;
+                    vector<string> cur = split(cr, '/');
+                    cur.resize(3);
+                    vertex_index[i] = atoi(cur[0].c_str()) - 1;
+                    texture_coords_index[i] = atoi(cur[1].c_str()) - 1;
+                    normal_index[i] = atoi(cur[2].c_str()) - 1;
                 }
-
-                string s;
-                file >> s;
-                s += "//";
-                string sc[3] = {"0", "0", "0"};
-                q = 0;
-                for (int i = 0; i < s.size(); ++i) {
-                    if (s[i] == '/') {
-                        ++q;
-                        if (q > 2) {
-                            break;
-                        }
-                    } else {
-                        sc[q] += s[i];
-                    }
+                triangles.emplace_back(array<vec4, 3>{temp_vertices[vertex_index[0]], temp_vertices[vertex_index[1]], temp_vertices[vertex_index[2]]}, material);
+                if (normal_index[0] >= 0) {
+                    triangles.back().setNormal(temp_normals[normal_index[0]]);
                 }
-
-                string t;
-                file >> t;
-                t += "//";
-                string th[3] = {"0", "0", "0"};
-                q = 0;
-                for (int i = 0; i < t.size(); ++i) {
-                    if (t[i] == '/') {
-                        ++q;
-                        if (q > 2) {
-                            break;
-                        }
-                    } else {
-                        th[q] += t[i];
-                    }
-                }
-
-                int vi1 = atoi(fr[0].c_str()), vi2 = atoi(sc[0].c_str()), vi3 = atoi(th[0].c_str()),
-                uvi1 = atoi(fr[1].c_str()), uvi2 = atoi(sc[1].c_str()), uvi3 = atoi(th[1].c_str()),
-                ni1 = atoi(fr[2].c_str()), ni2 = atoi(sc[2].c_str()), ni3 = atoi(th[2].c_str());
-                vi1--;
-                vi2--;
-                vi3--;
-                triangles.push_back(Triangle({temp_vertices[vi1], temp_vertices[vi2], temp_vertices[vi3]}, material));
-                triangles.back().setNormal(temp_normals[ni1 - 1]);
             }
         }
     }
@@ -364,12 +334,12 @@ int main(int argc, char* argv[]) {
     vector<vector<vec3> > Color2Map(Config::get().width, vector<vec3>(Config::get().height, vec3(0, 0, 0)));
     vector<vector<int> > SamplesCount(Config::get().width, vector<int>(Config::get().height, 0));
     vector<BaseMaterial*> Materials = {new DiffuseMaterial(vec3(1, 1, 1)),
-                                       new DiffuseMaterial(vec3(1, 0, 0)),
-                                       new DiffuseMaterial(vec3(0, 1, 0)),
+                                       new DiffuseMaterial(vec3(1, 0.01, 0.01)),
+                                       new DiffuseMaterial(vec3(0.01, 1, 0.01)),
                                        new LightMaterial(ColorMap, Color2Map, SamplesCount, vec3(1, 1, 1)),
-                                       new TransparentMaterial(vec3(1, 1, 0), 1.25),
+                                       new TransparentMaterial(vec3(1, 1, 0.01), 1.25),
                                        new MirrorMaterial(vec3(1, 1, 1)),
-                                       new DiffuseMaterial(vec3(1, 0, 1))};
+                                       new DiffuseMaterial(vec3(1, 0.01, 1))};
 
     Scene scene;
     scene.LoadModel(Config::get().path, Materials[6]);
