@@ -53,6 +53,7 @@ public:
 
             if ((std::string)argv[i] == "-MEDIAN") {
                 median = std::atoi(argv[i + 1]);
+                gauss = 0;
             }
 
             if ((std::string)argv[i] == "-UPDATE") {
@@ -65,6 +66,7 @@ public:
 
             if ((std::string)argv[i] == "-GAUSS") {
                 gauss = std::atoi(argv[i + 1]);
+                median = 0;
             }
         }
     }
