@@ -103,7 +103,7 @@ class BaseMaterial {
 protected:
     vec3 color;
 public:
-    virtual void process(Ray &ray, vec4 pi, vec4 N) = 0;
+    virtual void process(Ray &ray, vec4 drop_point, vec4 N) = 0;
     virtual ~BaseMaterial() = default;
     BaseMaterial(vec3 col) :color(col) {};
 };
@@ -111,15 +111,15 @@ public:
 class MirrorMaterial : public BaseMaterial {
 public:
     MirrorMaterial(vec3 col) :BaseMaterial(col) {};
-    void process(Ray &ray, vec4 pi, vec4 N) {
-        ray.reflect(pi + N * Config::get().EPS, reflect(ray.getDir(), N), color);
+    void process(Ray &ray, vec4 drop_point, vec4 N) {
+        ray.reflect(drop_point + N * Config::get().EPS, reflect(ray.getDir(), N), color);
     }
 };
 
 class DiffuseMaterial : public BaseMaterial {
 public:
     DiffuseMaterial(vec3 col) :BaseMaterial(col) {};
-    void process(Ray &ray, vec4 pi, vec4 N) {
+    void process(Ray &ray, vec4 drop_point, vec4 N) {
         static default_random_engine generator(time(0));
         static uniform_real_distribution<> distribution(.0f, 1.f);
         float xi1 = distribution(generator),
@@ -131,7 +131,7 @@ public:
 
         float dt = std::max(0.0f, dot(N, rnd));
 
-        ray.reflect(pi + N * Config::get().EPS, rnd, color * dt);
+        ray.reflect(drop_point + N * Config::get().EPS, rnd, color * dt);
     }
 };
 
@@ -142,7 +142,7 @@ private:
     vector<vector<int> > &SamplesCount;
 public:
     LightMaterial(vector<vector<vec3> > &CM, vector<vector<vec3> > &C2M, vector<vector<int> > &SC, vec3 col) :ColorMap(CM), Color2Map(C2M), SamplesCount(SC), BaseMaterial(col){};
-    void process(Ray &ray, vec4 pi, vec4 N) {
+    void process(Ray &ray, vec4 drop_point, vec4 N) {
         if (dot(ray.getDir(), N) < 0) {
             ray.make_invalid();
             return;
@@ -159,7 +159,7 @@ private:
     float ref_in;
 public:
     TransparentMaterial(vec3 col, float n) :BaseMaterial(col), ref_in(n){};
-    void process(Ray &ray, vec4 pi, vec4 N) {
+    void process(Ray &ray, vec4 drop_point, vec4 N) {
         vec4 dir;
         vec3 col;
         if (dot(N, ray.getDir()) > 0) {
@@ -170,7 +170,7 @@ public:
             col = color;
         }
 
-        ray.reflect(pi + dir * Config::get().EPS, dir, col);
+        ray.reflect(drop_point + dir * Config::get().EPS, dir, col);
     }
 };
 
@@ -231,11 +231,11 @@ public:
             return false;
         }
 
-        vec4 pi = ray.getBegin() + ray.getDir() * newT;
+        vec4 drop_point = ray.getBegin() + ray.getDir() * newT;
         float full_square = square(vertices[0], vertices[1], vertices[2]);
-        float small_square_1 = square(pi, vertices[1], vertices[2]);
-        float small_square_2 = square(vertices[0], pi, vertices[2]);
-        float small_square_3 = square(vertices[0], vertices[1], pi);
+        float small_square_1 = square(drop_point, vertices[1], vertices[2]);
+        float small_square_2 = square(vertices[0], drop_point, vertices[2]);
+        float small_square_3 = square(vertices[0], vertices[1], drop_point);
         if (abs(full_square - small_square_1 - small_square_2 - small_square_3) > Config::get().EPS) {
             return false;
         }
@@ -311,9 +311,9 @@ public:
             }
         }
         if (cur > -1) {
-            vec4 pi = ray.getBegin() + ray.getDir() * t;
+            vec4 drop_point = ray.getBegin() + ray.getDir() * t;
             vec4 N = triangles[cur].getNormal();
-            triangles[cur].getMaterial().process(ray, pi, N);
+            triangles[cur].getMaterial().process(ray, drop_point, N);
         } else {
             ray.make_invalid();
         }
