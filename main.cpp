@@ -298,8 +298,10 @@ int main(int argc, char* argv[]) {
                     ray.make_invalid();
                     return;
                 }
-                ColorMap[ray.getCoords().x][ray.getCoords().y] += ray.getCol() * vec3(1, 1, 1);
-                Color2Map[ray.getCoords().x][ray.getCoords().y] += (ray.getCol() * vec3(1, 1, 1)) * (ray.getCol() * vec3(1, 1, 1));
+
+                vec3 per = ray.getCol() * vec3(1, 1, 1);
+                ColorMap[ray.getCoords().x][ray.getCoords().y] += per;
+                Color2Map[ray.getCoords().x][ray.getCoords().y] += (per * per);
                 ++SamplesCount[ray.getCoords().x][ray.getCoords().y];
                 ray.make_invalid();}, 1);
 
