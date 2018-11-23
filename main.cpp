@@ -9,6 +9,7 @@
 #include "glm/geometric.hpp"
 #include "config.h"
 #include "ray.h"
+#include "material.h"
 
 using namespace std;
 using namespace glm;
@@ -99,81 +100,6 @@ vector<vector<vec3> > median_filter(vector<vector<vec3> > ColorMap, int t) {
     return Ans;
 }
 
-class BaseMaterial {
-protected:
-    vec3 color;
-public:
-    virtual void process(Ray &ray, vec4 drop_point, vec4 N) = 0;
-    virtual ~BaseMaterial() = default;
-    BaseMaterial(vec3 col) :color(col) {};
-};
-
-class MirrorMaterial : public BaseMaterial {
-public:
-    MirrorMaterial(vec3 col) :BaseMaterial(col) {};
-    void process(Ray &ray, vec4 drop_point, vec4 N) {
-        ray.reflect(drop_point + N * Config::get().EPS, reflect(ray.getDir(), N), color);
-    }
-};
-
-class DiffuseMaterial : public BaseMaterial {
-public:
-    DiffuseMaterial(vec3 col) :BaseMaterial(col) {};
-    void process(Ray &ray, vec4 drop_point, vec4 N) {
-        static default_random_engine generator(time(0));
-        static uniform_real_distribution<> distribution(.0f, 1.f);
-        float xi1 = distribution(generator),
-              xi2 = distribution(generator);
-        vec4 rnd = normalize(vec4(sqrt(xi1) * cos(2 * PI * xi2), sqrt(xi1) * sin(2 * PI * xi2), sqrt(1 - xi1), 0));
-        if (dot(N, rnd) < 0) {
-            rnd *= -1;
-        }
-
-        float dt = std::max(0.0f, dot(N, rnd));
-
-        ray.reflect(drop_point + N * Config::get().EPS, rnd, color * dt);
-    }
-};
-
-class LightMaterial : public BaseMaterial {
-private:
-    vector<vector<vec3> > &ColorMap;
-    vector<vector<vec3> > &Color2Map;
-    vector<vector<int> > &SamplesCount;
-public:
-    LightMaterial(vector<vector<vec3> > &CM, vector<vector<vec3> > &C2M, vector<vector<int> > &SC, vec3 col) :ColorMap(CM), Color2Map(C2M), SamplesCount(SC), BaseMaterial(col){};
-    void process(Ray &ray, vec4 drop_point, vec4 N) {
-        if (dot(ray.getDir(), N) < 0) {
-            ray.make_invalid();
-            return;
-        }
-        ColorMap[ray.getCoords().x][ray.getCoords().y] += ray.getCol() * color;
-        Color2Map[ray.getCoords().x][ray.getCoords().y] += (ray.getCol() * color) * (ray.getCol() * color);
-        ++SamplesCount[ray.getCoords().x][ray.getCoords().y];
-        ray.make_invalid();
-    }
-};
-
-class TransparentMaterial : public BaseMaterial {
-private:
-    float ref_in;
-public:
-    TransparentMaterial(vec3 col, float n) :BaseMaterial(col), ref_in(n){};
-    void process(Ray &ray, vec4 drop_point, vec4 N) {
-        vec4 dir;
-        vec3 col;
-        if (dot(N, ray.getDir()) > 0) {
-            dir = refract(ray.getDir(), -N, ref_in);
-            col = vec3(1, 1, 1);
-        } else {
-            dir = refract(ray.getDir(), N, 1 / ref_in);
-            col = color;
-        }
-
-        ray.reflect(drop_point + dir * Config::get().EPS, dir, col);
-    }
-};
-
 bool planeintersect(Ray &ray, float &t, vec4 plane) {
     vec4 o = ray.getBegin();
     vec4 d = ray.getDir();
@@ -193,11 +119,11 @@ bool planeintersect(Ray &ray, float &t, vec4 plane) {
 class Triangle {
 private:
     vec4 plane;
-    BaseMaterial* material;
+    Material material;
     array<vec4, 3> vertices;
 
 public:
-    Triangle(const array<vec4, 3> &a, BaseMaterial* m): vertices(a), material(move(m)) {
+    Triangle(const array<vec4, 3> &a, Material m): vertices(a), material(m) {
         vec4 e1 = vertices[1] - vertices[0];
         vec4 e2 = vertices[2] - vertices[0];
         plane = normalize(cross(e1, e2));
@@ -217,8 +143,8 @@ public:
         plane.w = -dot(plane, vertices[0]);
     }
 
-    BaseMaterial &getMaterial() const {
-        return *material;
+    Material getMaterial() const {
+        return material;
     }
 
     bool intersect(Ray &ray, float &t) const {
@@ -248,7 +174,7 @@ class Scene {
 private:
     vector<Triangle> triangles;
 public:
-    void LoadModel(const char *path, BaseMaterial *material) {
+    void LoadModel(const char *path, Material material) {
         vector<vec4> temp_vertices;
         vector<vec2> temp_texture_coords;
         vector<vec3> temp_normals;
@@ -333,16 +259,61 @@ int main(int argc, char* argv[]) {
     vector<vector<vec3> > ColorMap(Config::get().width, vector<vec3>(Config::get().height, vec3(0, 0, 0)));
     vector<vector<vec3> > Color2Map(Config::get().width, vector<vec3>(Config::get().height, vec3(0, 0, 0)));
     vector<vector<int> > SamplesCount(Config::get().width, vector<int>(Config::get().height, 0));
-    vector<BaseMaterial*> Materials = {new DiffuseMaterial(vec3(1, 1, 1)),
-                                       new DiffuseMaterial(vec3(1, 0.01, 0.01)),
-                                       new DiffuseMaterial(vec3(0.01, 1, 0.01)),
-                                       new LightMaterial(ColorMap, Color2Map, SamplesCount, vec3(1, 1, 1)),
-                                       new TransparentMaterial(vec3(1, 1, 0.01), 1.25),
-                                       new MirrorMaterial(vec3(1, 1, 1)),
-                                       new DiffuseMaterial(vec3(1, 0.01, 1))};
+
+    vector<Material> Materials = {Material(),
+                                   Material(),
+                                   Material(),
+                                   Material(),
+                                   Material()};
+
+    Materials[0].add_functions([](Ray &ray, vec4 drop_point, vec4 N) {
+        float xi1 = random0_1(), xi2 = random0_1();
+        vec4 rnd = normalize(vec4(sqrt(xi1) * cos(2 * PI * xi2), sqrt(xi1) * sin(2 * PI * xi2), sqrt(1 - xi1), 0));
+        if (dot(N, rnd) < 0) {
+            rnd *= -1;
+        }
+        float dt = std::max(0.0f, dot(N, rnd));
+        ray.reflect(drop_point + N * Config::get().EPS, rnd, vec3(1, 1, 1) * dt);}, 1);
+
+    Materials[1].add_functions([](Ray &ray, vec4 drop_point, vec4 N) {
+        float xi1 = random0_1(), xi2 = random0_1();
+        vec4 rnd = normalize(vec4(sqrt(xi1) * cos(2 * PI * xi2), sqrt(xi1) * sin(2 * PI * xi2), sqrt(1 - xi1), 0));
+        if (dot(N, rnd) < 0) {
+            rnd *= -1;
+        }
+        float dt = std::max(0.0f, dot(N, rnd));
+        ray.reflect(drop_point + N * Config::get().EPS, rnd, vec3(1, 0.01, 0.01) * dt);}, 1);
+
+    Materials[2].add_functions([](Ray &ray, vec4 drop_point, vec4 N) {
+        float xi1 = random0_1(), xi2 = random0_1();
+        vec4 rnd = normalize(vec4(sqrt(xi1) * cos(2 * PI * xi2), sqrt(xi1) * sin(2 * PI * xi2), sqrt(1 - xi1), 0));
+        if (dot(N, rnd) < 0) {
+            rnd *= -1;
+        }
+        float dt = std::max(0.0f, dot(N, rnd));
+        ray.reflect(drop_point + N * Config::get().EPS, rnd, vec3(0.01, 1, 0.01) * dt);}, 1);
+
+    Materials[3].add_functions([&ColorMap, &Color2Map, &SamplesCount](Ray &ray, vec4 drop_point, vec4 N) {
+                if (dot(ray.getDir(), N) < 0) {
+                    ray.make_invalid();
+                    return;
+                }
+                ColorMap[ray.getCoords().x][ray.getCoords().y] += ray.getCol() * vec3(1, 1, 1);
+                Color2Map[ray.getCoords().x][ray.getCoords().y] += (ray.getCol() * vec3(1, 1, 1)) * (ray.getCol() * vec3(1, 1, 1));
+                ++SamplesCount[ray.getCoords().x][ray.getCoords().y];
+                ray.make_invalid();}, 1);
+
+    Materials[4].add_functions([](Ray &ray, vec4 drop_point, vec4 N) {
+        float xi1 = random0_1(), xi2 = random0_1();
+        vec4 rnd = normalize(vec4(sqrt(xi1) * cos(2 * PI * xi2), sqrt(xi1) * sin(2 * PI * xi2), sqrt(1 - xi1), 0));
+        if (dot(N, rnd) < 0) {
+            rnd *= -1;
+        }
+        float dt = std::max(0.0f, dot(N, rnd));
+        ray.reflect(drop_point + N * Config::get().EPS, rnd, vec3(1, 0.01, 1) * dt);}, 1);
 
     Scene scene;
-    scene.LoadModel(Config::get().path, Materials[6]);
+    scene.LoadModel(Config::get().path, Materials[4]);
 
     float cube_a = 10;
     scene.AddTriangle(Triangle({vec4(-cube_a, cube_a, cube_a, 1), vec4(cube_a, cube_a, cube_a, 1),
