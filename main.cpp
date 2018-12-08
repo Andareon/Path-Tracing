@@ -14,8 +14,6 @@
 using namespace std;
 using namespace glm;
 
-const float PI = 3.141593;
-
 vector<string> split(string str, char sep) {
     vector<string> ans;
     int begin, end;
@@ -173,8 +171,13 @@ public:
 class Scene {
 private:
     vector<Triangle> triangles;
+    vector<vector<vec3> > &ColorMap;
+    vector<vector<vec3> > &Color2Map;
+    vector<vector<int> > &SamplesCount;
+    vector<Material> materials;
 public:
-    void LoadModel(const char *path, Material material) {
+    Scene(vector<vector<vec3> > &CM, vector<vector<vec3> > &C2M, vector<vector<int> > &SC) :ColorMap(CM), Color2Map(C2M), SamplesCount(SC){};
+    void LoadModel(const char *path) {
         vector<vec4> temp_vertices;
         vector<vec2> temp_texture_coords;
         vector<vec3> temp_normals;
@@ -184,12 +187,42 @@ public:
             printf("Impossible to open the file !\n");
             return;
         }
+        int curmat = 0;
         while (1) {
             if (file.eof())
                 break;
             string first;
             file >> first;
-            if (first == "v") {
+            if (first == "mtllib") {
+                char mtlpath[100];
+                char mtlname[100];
+                file >> mtlname;
+                strcpy(mtlpath, Config::get().model_path);
+                strcat(mtlpath, mtlname);
+                ifstream mtlfile(mtlpath);
+
+                string mtlfirst = "1";
+                vector<float> args = {0, 0, 0, 0, 0, 0};
+                while(1) {
+                    if (mtlfile.eof()) {
+                        break;
+                    }
+                    while (!mtlfile.eof() && mtlfirst != "newmtl") {
+                        mtlfile >> mtlfirst;
+                    }
+                    mtlfile >> mtlfirst;
+                    while (!mtlfile.eof() && mtlfirst != "newmtl") {
+                        if (mtlfirst == "Kd") {
+                            mtlfile >> args[0] >> args[1] >> args[2];
+                        } else if (mtlfirst == "Ke") {
+                            mtlfile >> args[3] >> args[4] >> args[5];
+                        }
+                        mtlfile >> mtlfirst;
+                    }
+                    materials.emplace_back(Factory(args, ColorMap, Color2Map, SamplesCount));
+                }
+
+            } else if (first == "v") {
                 glm::vec4 vertex = vec4(1);
                 file >> vertex.x >> vertex.y >> vertex.z;
                 temp_vertices.push_back(vertex);
@@ -214,10 +247,12 @@ public:
                     texture_coords_index[i] = atoi(cur[1].c_str()) - 1;
                     normal_index[i] = atoi(cur[2].c_str()) - 1;
                 }
-                triangles.emplace_back(array<vec4, 3>{temp_vertices[vertex_index[0]], temp_vertices[vertex_index[1]], temp_vertices[vertex_index[2]]}, material);
+                triangles.emplace_back(array<vec4, 3>{temp_vertices[vertex_index[0]], temp_vertices[vertex_index[1]], temp_vertices[vertex_index[2]]}, materials[curmat]);
                 if (normal_index[0] >= 0) {
                     triangles.back().setNormal(temp_normals[normal_index[0]]);
                 }
+            } else if (first == "usemtl") {
+                file >> curmat;
             }
         }
     }
@@ -260,101 +295,11 @@ int main(int argc, char* argv[]) {
     vector<vector<vec3> > Color2Map(Config::get().width, vector<vec3>(Config::get().height, vec3(0, 0, 0)));
     vector<vector<int> > SamplesCount(Config::get().width, vector<int>(Config::get().height, 0));
 
-    vector<Material> Materials = {Material(),
-                                   Material(),
-                                   Material(),
-                                   Material(),
-                                   Material()};
-
-    Materials[0].add_functions([](Ray &ray, vec4 drop_point, vec4 N) {
-        float xi1 = random0_1(), xi2 = random0_1();
-        vec4 rnd = normalize(vec4(sqrt(xi1) * cos(2 * PI * xi2), sqrt(xi1) * sin(2 * PI * xi2), sqrt(1 - xi1), 0));
-        if (dot(N, rnd) < 0) {
-            rnd *= -1;
-        }
-        float dt = std::max(0.0f, dot(N, rnd));
-        ray.reflect(drop_point + N * Config::get().EPS, rnd, vec3(1, 1, 1) * dt);}, 1);
-
-    Materials[1].add_functions([](Ray &ray, vec4 drop_point, vec4 N) {
-        float xi1 = random0_1(), xi2 = random0_1();
-        vec4 rnd = normalize(vec4(sqrt(xi1) * cos(2 * PI * xi2), sqrt(xi1) * sin(2 * PI * xi2), sqrt(1 - xi1), 0));
-        if (dot(N, rnd) < 0) {
-            rnd *= -1;
-        }
-        float dt = std::max(0.0f, dot(N, rnd));
-        ray.reflect(drop_point + N * Config::get().EPS, rnd, vec3(1, 0.01, 0.01) * dt);}, 1);
-
-    Materials[2].add_functions([](Ray &ray, vec4 drop_point, vec4 N) {
-        float xi1 = random0_1(), xi2 = random0_1();
-        vec4 rnd = normalize(vec4(sqrt(xi1) * cos(2 * PI * xi2), sqrt(xi1) * sin(2 * PI * xi2), sqrt(1 - xi1), 0));
-        if (dot(N, rnd) < 0) {
-            rnd *= -1;
-        }
-        float dt = std::max(0.0f, dot(N, rnd));
-        ray.reflect(drop_point + N * Config::get().EPS, rnd, vec3(0.01, 1, 0.01) * dt);}, 1);
-
-    Materials[3].add_functions([&ColorMap, &Color2Map, &SamplesCount](Ray &ray, vec4 drop_point, vec4 N) {
-                if (dot(ray.getDir(), N) < 0) {
-                    ray.make_invalid();
-                    return;
-                }
-
-                vec3 per = ray.getCol() * vec3(1, 1, 1);
-                ColorMap[ray.getCoords().x][ray.getCoords().y] += per;
-                Color2Map[ray.getCoords().x][ray.getCoords().y] += (per * per);
-                ++SamplesCount[ray.getCoords().x][ray.getCoords().y];
-                ray.make_invalid();}, 1);
-
-    Materials[4].add_functions([](Ray &ray, vec4 drop_point, vec4 N) {
-        float xi1 = random0_1(), xi2 = random0_1();
-        vec4 rnd = normalize(vec4(sqrt(xi1) * cos(2 * PI * xi2), sqrt(xi1) * sin(2 * PI * xi2), sqrt(1 - xi1), 0));
-        if (dot(N, rnd) < 0) {
-            rnd *= -1;
-        }
-        float dt = std::max(0.0f, dot(N, rnd));
-        ray.reflect(drop_point + N * Config::get().EPS, rnd, vec3(1, 0.01, 1) * dt);}, 1);
-
-    Scene scene;
-    scene.LoadModel(Config::get().path, Materials[4]);
-
-    float cube_a = 10;
-    scene.AddTriangle(Triangle({vec4(-cube_a, cube_a, cube_a, 1), vec4(cube_a, cube_a, cube_a, 1),
-                                vec4(cube_a, -cube_a, cube_a, 1)}, Materials[0]));
-
-    scene.AddTriangle(Triangle({vec4(-cube_a, cube_a, cube_a, 1), vec4(cube_a, -cube_a, cube_a, 1),
-                                vec4(-cube_a, -cube_a, cube_a, 1)}, Materials[0]));
-
-    scene.AddTriangle(Triangle({vec4(-cube_a, cube_a, -cube_a, 1), vec4(-cube_a, cube_a, cube_a, 1),
-                                vec4(-cube_a, -cube_a, cube_a, 1)}, Materials[1]));
-
-    scene.AddTriangle(Triangle({vec4(-cube_a, cube_a, -cube_a, 1), vec4(-cube_a, -cube_a, cube_a, 1),
-                                vec4(-cube_a, -cube_a, -cube_a, 1)}, Materials[1]));
-
-    scene.AddTriangle(Triangle({vec4(cube_a, cube_a, -cube_a, 1), vec4(cube_a, -cube_a, cube_a, 1),
-                                vec4(cube_a, cube_a, cube_a, 1)}, Materials[2]));
-
-    scene.AddTriangle(Triangle({vec4(cube_a, cube_a, -cube_a, 1), vec4(cube_a, -cube_a, -cube_a, 1),
-                                vec4(cube_a, -cube_a, cube_a, 1)}, Materials[2]));
-
-    scene.AddTriangle(Triangle({vec4(-cube_a, cube_a, cube_a, 1), vec4(cube_a, cube_a, -cube_a, 1),
-                                vec4(cube_a, cube_a, cube_a, 1)}, Materials[0]));
-
-    scene.AddTriangle(Triangle({vec4(-cube_a, cube_a, cube_a, 1), vec4(-cube_a, cube_a, -cube_a, 1),
-                                vec4(cube_a, cube_a, -cube_a, 1)}, Materials[0]));
-
-    scene.AddTriangle(Triangle({vec4(-cube_a, -cube_a, cube_a, 1), vec4(cube_a, -cube_a, cube_a, 1),
-                                vec4(cube_a, -cube_a, -cube_a, 1)}, Materials[0]));
-
-    scene.AddTriangle(Triangle({vec4(-cube_a, -cube_a, cube_a, 1), vec4(cube_a, -cube_a, -cube_a, 1),
-                                vec4(-cube_a, -cube_a, -cube_a, 1)}, Materials[0]));
-
-    scene.AddTriangle(Triangle({vec4(-1, cube_a - 1, 1, 1), vec4(1, cube_a - 1, 1, 1),
-                                vec4(1, cube_a - 1, -1, 1)}, Materials[3]));
-
-    scene.AddTriangle(Triangle({vec4(-1, cube_a - 1, 1, 1), vec4(1, cube_a - 1, -1, 1),
-                                vec4(-1, cube_a - 1, -1, 1)}, Materials[3]));
-
-
+    Scene scene = Scene(ColorMap, Color2Map, SamplesCount);
+    char modelpath[100];
+    strcpy(modelpath, Config::get().model_path);
+    strcat(modelpath, Config::get().model_name);
+    scene.LoadModel(modelpath);
 
 
     bitmap_image image(Config::get().width, Config::get().height);

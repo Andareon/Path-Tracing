@@ -18,7 +18,8 @@ public:
     float error = 0.001;
     int update = 32;
     float gamma_kor = 1/2.2;
-    const char *path = "../1.obj";
+    const char *model_path = "../";
+    const char *model_name = "3.obj";
     static Config& get() {
 
         static Config instance;
@@ -61,8 +62,12 @@ public:
                 update = std::atoi(argv[i + 1]);
             }
 
-            if ((std::string)argv[i] == "-PATH") {
-                path = argv[i + 1];
+            if ((std::string)argv[i] == "-MODEL_PATH") {
+                model_path = argv[i + 1];
+            }
+
+            if ((std::string)argv[i] == "-MODEL_NAME") {
+                model_name = argv[i + 1];
             }
 
             if ((std::string)argv[i] == "-GAUSS") {
