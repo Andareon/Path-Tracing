@@ -277,9 +277,6 @@ public:
             vec4 N = triangles[cur].getNormal();
             triangles[cur].getMaterial().process(ray, drop_point, N);
         } else {
-            float x = ray.getDir().x,
-                  y = ray.getDir().y,
-                  z = ray.getDir().z;
             float theta = acos(ray.getDir().y) / PI,
                           phi = atan2(ray.getDir().z, -ray.getDir().x) / PI / 2 + 0.5f;
             auto col = skybox.get_pixel((int)(phi * skybox.width()), (int)(theta * skybox.height()));
