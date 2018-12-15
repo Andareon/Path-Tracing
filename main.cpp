@@ -14,6 +14,33 @@
 using namespace std;
 using namespace glm;
 
+bool planeintersect(Ray &ray, float &t, glm::vec4 plane) {
+    glm::vec4 o = ray.getBegin();
+    glm::vec4 d = ray.getDir();
+    if (abs(dot(plane, d)) < Config::get().EPS) {
+        return false;
+    } else {
+        float newT = -dot(o, plane) / dot(d, plane);
+        if (t > newT && newT > 0) {
+            t = newT;
+            return true;
+        } else {
+            return false;
+        }
+    }
+}
+
+float square(glm::vec4 A, glm::vec4 B, glm::vec4 C) {
+    glm::vec3 a = B - A;
+    glm::vec3 b = C - A;
+    glm::vec3 c = cross(a, b);
+    return length(c) / 2;
+}
+
+glm::vec4 cross(glm::vec4 a, glm::vec4 b) {
+    return glm::vec4(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x, 0);
+}
+
 vector<string> split(string str, char sep) {
     vector<string> ans;
     int begin, end;
@@ -22,17 +49,6 @@ vector<string> split(string str, char sep) {
     }
     ans.push_back(str.substr(begin));
     return ans;
-}
-
-float square(vec4 A, vec4 B, vec4 C) {
-    vec3 a = B - A;
-    vec3 b = C - A;
-    vec3 c = cross(a, b);
-    return length(c) / 2;
-}
-
-vec4 cross(vec4 a, vec4 b) {
-    return vec4(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x, 0);
 }
 
 vector<vector<vec3> > gauss_blur(vector<vector<vec3> > ColorMap, float r) {
@@ -98,41 +114,25 @@ vector<vector<vec3> > median_filter(vector<vector<vec3> > ColorMap, int t) {
     return Ans;
 }
 
-bool planeintersect(Ray &ray, float &t, vec4 plane) {
-    vec4 o = ray.getBegin();
-    vec4 d = ray.getDir();
-    if (abs(dot(plane, d)) < Config::get().EPS) {
-        return false;
-    } else {
-        float newT = -dot(o, plane) / dot(d, plane);
-        if (t > newT && newT > 0) {
-            t = newT;
-            return true;
-        } else {
-            return false;
-        }
-    }
-}
-
 class Triangle {
 private:
-    vec4 plane;
+    glm::vec4 plane;
     Material material;
-    array<vec4, 3> vertices;
+    std::array<glm::vec4, 3> vertices;
 
 public:
-    Triangle(const array<vec4, 3> &a, Material m): vertices(a), material(m) {
-        vec4 e1 = vertices[1] - vertices[0];
-        vec4 e2 = vertices[2] - vertices[0];
+    Triangle(const std::array<glm::vec4, 3> &a, Material m): vertices(a), material(m) {
+        glm::vec4 e1 = vertices[1] - vertices[0];
+        glm::vec4 e2 = vertices[2] - vertices[0];
         plane = normalize(cross(e1, e2));
         plane.w = -dot(plane, vertices[0]);
     }
 
-    vec4 getNormal() const {
-        return vec4(plane.x, plane.y, plane.z, 0);
+    glm::vec4 getNormal() const {
+        return glm::vec4(plane.x, plane.y, plane.z, 0);
     }
 
-    void setNormal(vec3 N) {
+    void setNormal(glm::vec3 N) {
         N = normalize(N);
         plane.x = N.x;
         plane.y = N.y;
@@ -155,7 +155,7 @@ public:
             return false;
         }
 
-        vec4 drop_point = ray.getBegin() + ray.getDir() * newT;
+        glm::vec4 drop_point = ray.getBegin() + ray.getDir() * newT;
         float full_square = square(vertices[0], vertices[1], vertices[2]);
         float small_square_1 = square(drop_point, vertices[1], vertices[2]);
         float small_square_2 = square(vertices[0], drop_point, vertices[2]);
@@ -175,6 +175,8 @@ private:
     vector<vector<vec3> > &Color2Map;
     vector<vector<int> > &SamplesCount;
     vector<Material> materials;
+    const string path = "../sb2.bmp";
+    bitmap_image skybox = bitmap_image(path);
 public:
     Scene(vector<vector<vec3> > &CM, vector<vector<vec3> > &C2M, vector<vector<int> > &SC) :ColorMap(CM), Color2Map(C2M), SamplesCount(SC){};
     void LoadModel(const char *path) {
@@ -261,7 +263,6 @@ public:
         triangles.push_back(tr);
     }
 
-
     void traceRay(Ray &ray) {
         float t = INFINITY;
         int triangles_count = triangles.size();
@@ -276,6 +277,16 @@ public:
             vec4 N = triangles[cur].getNormal();
             triangles[cur].getMaterial().process(ray, drop_point, N);
         } else {
+            float x = ray.getDir().x,
+                  y = ray.getDir().y,
+                  z = ray.getDir().z;
+            float theta = acos(ray.getDir().y) / PI,
+                          phi = atan2(ray.getDir().z, -ray.getDir().x) / PI / 2 + 0.5f;
+            auto col = skybox.get_pixel((int)(phi * skybox.width()), (int)(theta * skybox.height()));
+            vec3 cl = vec3((float)(int)col.red / 256, (float)(int)col.green / 256, (float)(int)col.blue / 256) * ray.getCol();
+            ColorMap[ray.getCoords().x][ray.getCoords().y] += cl;
+            Color2Map[ray.getCoords().x][ray.getCoords().y] += cl * cl;
+            ++SamplesCount[ray.getCoords().x][ray.getCoords().y];
             ray.make_invalid();
         }
     }
@@ -305,7 +316,6 @@ int main(int argc, char* argv[]) {
     bitmap_image image(Config::get().width, Config::get().height);
 
     image.clear();
-
     for (int i = 0; i < Config::get().RAYS_PER_PIXEL; ++i) {
         for (int y = 0; y < Config::get().height; ++y) {
             #pragma omp parallel for num_threads(4)
