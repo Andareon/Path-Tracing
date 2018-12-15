@@ -175,17 +175,15 @@ private:
     vector<vector<vec3> > &Color2Map;
     vector<vector<int> > &SamplesCount;
     vector<Material> materials;
-    const string path = "../sb2.bmp";
-    bitmap_image skybox = bitmap_image(path);
+    bitmap_image skybox = bitmap_image("../sb2.bmp");
 public:
     Scene(vector<vector<vec3> > &CM, vector<vector<vec3> > &C2M, vector<vector<int> > &SC) :ColorMap(CM), Color2Map(C2M), SamplesCount(SC){};
-    void LoadModel(const char *path) {
+    void LoadModel(string path) {
         vector<vec4> temp_vertices;
         vector<vec2> temp_texture_coords;
         vector<vec3> temp_normals;
-        FILE *fil = fopen(path, "r");
         ifstream file(path);
-        if (fil == NULL) {
+        if (file.eof()) {
             printf("Impossible to open the file !\n");
             return;
         }
@@ -196,12 +194,9 @@ public:
             string first;
             file >> first;
             if (first == "mtllib") {
-                char mtlpath[100];
-                char mtlname[100];
+                string mtlname;
                 file >> mtlname;
-                strcpy(mtlpath, Config::get().model_path);
-                strcat(mtlpath, mtlname);
-                ifstream mtlfile(mtlpath);
+                ifstream mtlfile(Config::get().model_path + mtlname);
 
                 string mtlfirst = "1";
                 vector<float> args = {0, 0, 0, 0, 0, 0};
@@ -304,10 +299,7 @@ int main(int argc, char* argv[]) {
     vector<vector<int> > SamplesCount(Config::get().width, vector<int>(Config::get().height, 0));
 
     Scene scene = Scene(ColorMap, Color2Map, SamplesCount);
-    char modelpath[100];
-    strcpy(modelpath, Config::get().model_path);
-    strcat(modelpath, Config::get().model_name);
-    scene.LoadModel(modelpath);
+    scene.LoadModel(Config::get().model_path + Config::get().model_name);
 
 
     bitmap_image image(Config::get().width, Config::get().height);

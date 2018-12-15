@@ -18,8 +18,8 @@ public:
     float error = 0.001;
     int update = 32;
     float gamma_kor = 1/2.2;
-    const char *model_path = "../";
-    const char *model_name = "3.obj";
+    std::string model_path = "../";
+    std::string model_name = "3.obj";
     static Config& get() {
 
         static Config instance;
