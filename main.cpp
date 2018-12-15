@@ -283,7 +283,7 @@ public:
             float theta = acos(ray.getDir().y) / PI,
                           phi = atan2(ray.getDir().z, -ray.getDir().x) / PI / 2 + 0.5f;
             auto col = skybox.get_pixel((int)(phi * skybox.width()), (int)(theta * skybox.height()));
-            vec3 cl = vec3((float)(int)col.red / 256, (float)(int)col.green / 256, (float)(int)col.blue / 256) * ray.getCol();
+            vec3 cl = vec3((float)col.red / 256, (float)col.green / 256, (float)col.blue / 256) * ray.getCol();
             ColorMap[ray.getCoords().x][ray.getCoords().y] += cl;
             Color2Map[ray.getCoords().x][ray.getCoords().y] += cl * cl;
             ++SamplesCount[ray.getCoords().x][ray.getCoords().y];
