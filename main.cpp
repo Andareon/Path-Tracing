@@ -1,14 +1,7 @@
-#include <memory>
-#include <random>
-#include <ctime>
-#include <cmath>
 #include <chrono>
-#include <fstream>
 
 #include "bitmap_image.hpp"
-#include "glm/geometric.hpp"
-#include "config.h"
-#include "ray.h"
+
 #include "material.h"
 
 using namespace std;

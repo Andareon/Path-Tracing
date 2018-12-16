@@ -3,6 +3,8 @@
 
 #include "glm/geometric.hpp"
 
+#include "config.h"
+
 class Ray {
 private:
     glm::vec4 begin;

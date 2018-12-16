@@ -1,12 +1,10 @@
 #ifndef RAY_TRACING_MATERIAL_H
 #define RAY_TRACING_MATERIAL_H
 
-#include "glm/geometric.hpp"
-#include "ray.h"
-#include <vector>
-#include <random>
-#include <ctime>
 #include <functional>
+#include <random>
+
+#include "ray.h"
 
 const float PI = 3.141593;
 
