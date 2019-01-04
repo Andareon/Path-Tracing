@@ -168,9 +168,13 @@ private:
     vector<vector<vec3> > &Color2Map;
     vector<vector<int> > &SamplesCount;
     vector<Material> materials;
-    bitmap_image skybox = bitmap_image("../sb2.bmp");
+    bitmap_image skybox;
 public:
-    Scene(vector<vector<vec3> > &CM, vector<vector<vec3> > &C2M, vector<vector<int> > &SC) :ColorMap(CM), Color2Map(C2M), SamplesCount(SC){};
+    Scene(vector<vector<vec3> > &CM, vector<vector<vec3> > &C2M, vector<vector<int> > &SC) :ColorMap(CM), Color2Map(C2M), SamplesCount(SC){
+        if (Config::get().skybox != "") {
+            skybox = bitmap_image("../sb2.bmp");
+        }
+    };
     void LoadModel(string path) {
         vector<vec4> temp_vertices;
         vector<vec2> temp_texture_coords;
@@ -265,31 +269,33 @@ public:
             vec4 N = triangles[cur].getNormal();
             triangles[cur].getMaterial().process(ray, drop_point, N);
         } else {
-            float theta = acos(ray.getDir().y) / PI,
-                          phi = atan2(ray.getDir().z, -ray.getDir().x) / PI / 2 + 0.5f;
+            if (Config::get().skybox != "") {
+                float theta = acos(ray.getDir().y) / PI,
+                        phi = atan2(ray.getDir().z, -ray.getDir().x) / PI / 2 + 0.5f;
 
-            float x = (phi * skybox.width()), y = (theta * skybox.height());
-            int x1 = (int)x, y1 = (int)y;
-            int x2 = (x1 + 1) % skybox.width(), y2 = (y1 + 1) % skybox.height();
+                float x = (phi * skybox.width()), y = (theta * skybox.height());
+                int x1 = (int) x, y1 = (int) y;
+                int x2 = (x1 + 1) % skybox.width(), y2 = (y1 + 1) % skybox.height();
 
-            auto col1 = skybox.get_pixel(x1, y1);
-            auto col2 = skybox.get_pixel(x2, y1);
-            auto col3 = skybox.get_pixel(x1, y2);
-            auto col4 = skybox.get_pixel(x2, y2);
+                auto col1 = skybox.get_pixel(x1, y1);
+                auto col2 = skybox.get_pixel(x2, y1);
+                auto col3 = skybox.get_pixel(x1, y2);
+                auto col4 = skybox.get_pixel(x2, y2);
 
-            vec3 cl1 = vec3((float)col1.red, (float)col1.green, (float)col1.blue);
-            vec3 cl2 = vec3((float)col2.red, (float)col2.green, (float)col2.blue);
-            vec3 cl3 = vec3((float)col3.red, (float)col3.green, (float)col3.blue);
-            vec3 cl4 = vec3((float)col4.red, (float)col4.green, (float)col4.blue);
+                vec3 cl1 = vec3((float) col1.red, (float) col1.green, (float) col1.blue);
+                vec3 cl2 = vec3((float) col2.red, (float) col2.green, (float) col2.blue);
+                vec3 cl3 = vec3((float) col3.red, (float) col3.green, (float) col3.blue);
+                vec3 cl4 = vec3((float) col4.red, (float) col4.green, (float) col4.blue);
 
-            vec3 cl12 = mix(cl1, cl2, 1 - x + x1);
-            vec3 cl34 = mix(cl3, cl4, 1 - x + x1);
+                vec3 cl12 = mix(cl1, cl2, 1 - x + x1);
+                vec3 cl34 = mix(cl3, cl4, 1 - x + x1);
 
-            vec3 cl = mix(cl12, cl34, 1 - y + y1) / 256.f;
+                vec3 cl = mix(cl12, cl34, 1 - y + y1) / 256.f;
 
-            ColorMap[ray.getCoords().x][ray.getCoords().y] += cl;
-            Color2Map[ray.getCoords().x][ray.getCoords().y] += cl * cl;
-            ++SamplesCount[ray.getCoords().x][ray.getCoords().y];
+                ColorMap[ray.getCoords().x][ray.getCoords().y] += cl;
+                Color2Map[ray.getCoords().x][ray.getCoords().y] += cl * cl;
+                ++SamplesCount[ray.getCoords().x][ray.getCoords().y];
+            }
             ray.make_invalid();
         }
     }

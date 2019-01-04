@@ -22,6 +22,7 @@ public:
     float gamma_kor = 1/2.2;
     std::string model_path = "../";
     std::string model_name = "3.obj";
+    std::string skybox = "";
     static Config& get() {
 
         static Config instance;
@@ -79,6 +80,10 @@ public:
 
             if ((std::string)argv[i] == "-GAMMA") {
                 gamma_kor = static_cast<float>(std::atof(argv[i + 1]));
+            }
+
+            if ((std::string)argv[i] == "-SKYBOX") {
+                skybox = argv[i + 1];
             }
         }
     }
