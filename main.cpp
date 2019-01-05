@@ -172,7 +172,7 @@ private:
 public:
     Scene(vector<vector<vec3> > &CM, vector<vector<vec3> > &C2M, vector<vector<int> > &SC) :ColorMap(CM), Color2Map(C2M), SamplesCount(SC){
         if (Config::get().skybox != "") {
-            skybox = bitmap_image("../sb2.bmp");
+            skybox = bitmap_image(Config::get().skybox);
         }
     };
     void LoadModel(string path) {
