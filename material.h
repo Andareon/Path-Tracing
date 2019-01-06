@@ -16,6 +16,11 @@ float random0_1() {
     return distribution(generator);
 }
 
+struct Material_characteristics {
+    glm::vec3 Ke = glm::vec3(0);
+    glm::vec3 Kd = glm::vec3(0);
+};
+
 class Material {
 private:
     std::vector<float> chance;
@@ -42,10 +47,9 @@ public:
         chance.emplace_back(ch);
     }
 };
-
-Material Factory(std::vector<float> args, std::vector<std::vector<glm::vec3> > &ColorMap, std::vector<std::vector<glm::vec3> > &Color2Map, std::vector<std::vector<int> > &SamplesCount) {
-    glm::vec3 Kd = glm::vec3(args[0], args[1], args[2]);
-    glm::vec3 Ke = glm::vec3(args[3], args[4], args[5]);
+Material Factory(Material_characteristics characteristics, std::vector<std::vector<glm::vec3> > &ColorMap, std::vector<std::vector<glm::vec3> > &Color2Map, std::vector<std::vector<int> > &SamplesCount) {
+    glm::vec3 Kd = characteristics.Kd;
+    glm::vec3 Ke = characteristics.Ke;
     Material mat;
     if (Ke != glm::vec3(0)) {
         auto func = [&ColorMap, &Color2Map, &SamplesCount, Kd] (Ray &ray, glm::vec4 drop_point, glm::vec4 N) {

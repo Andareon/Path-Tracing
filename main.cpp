@@ -196,7 +196,7 @@ public:
                 ifstream mtlfile(Config::get().model_path + mtlname);
 
                 string mtlfirst = "1";
-                vector<float> args = {0, 0, 0, 0, 0, 0};
+                Material_characteristics characteristics;
                 while(1) {
                     if (mtlfile.eof()) {
                         break;
@@ -207,13 +207,13 @@ public:
                     mtlfile >> mtlfirst;
                     while (!mtlfile.eof() && mtlfirst != "newmtl") {
                         if (mtlfirst == "Kd") {
-                            mtlfile >> args[0] >> args[1] >> args[2];
+                            mtlfile >> characteristics.Kd.x >> characteristics.Kd.y >> characteristics.Kd.z;
                         } else if (mtlfirst == "Ke") {
-                            mtlfile >> args[3] >> args[4] >> args[5];
+                            mtlfile >> characteristics.Ke.x >> characteristics.Ke.y >> characteristics.Ke.z;
                         }
                         mtlfile >> mtlfirst;
                     }
-                    materials.emplace_back(Factory(args, ColorMap, Color2Map, SamplesCount));
+                    materials.emplace_back(Factory(characteristics, ColorMap, Color2Map, SamplesCount));
                 }
 
             } else if (first == "v") {
