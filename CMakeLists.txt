@@ -4,7 +4,9 @@ project(Ray_Tracing)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_FLAGS "-fopenmp")
 
-include_directories(../Libs/glm)
+find_package(glm REQUIRED)
+include_directories(${GLM_INCLUDE_DIRS})
+
 include_directories(../Libs/assimp)
 include_directories(../Libs)
 
