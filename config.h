@@ -5,51 +5,49 @@
 
 class Config {
 private:
-    Config(){}
+    Config() {}
     Config(const Config&) = delete;
     Config& operator=(Config&) = delete;
 
 public:
     int height = 512;
     int width = 512;
-    int RAYS_PER_PIXEL = 20;
-    int MAX_RAY_REFLECTIONS = 8;
+    int rays_per_pixel = 20;
+    int max_ray_reflections = 8;
     int median = 0;
     int gauss = 0;
-    float EPS = 1e-6;
+    float eps = 1e-6;
     float error = 0.001;
     int update = 32;
-    float gamma_kor = 1/2.2;
+    float gamma_correction = 1 / 2.2;
     std::string model_path = "../";
     std::string model_name = "3.obj";
     std::string skybox = "";
     static Config& get() {
-
         static Config instance;
         return instance;
     }
 
-
     void set_config(int argc, char* argv[]) {
         for (int i = 1; i < argc - 1; i += 2) {
-            if ((std::string)argv[i] == "-H") {
+            if ((std::string)argv[i] == "--H") {
                 height = std::atoi(argv[i + 1]);
             }
 
-            if ((std::string)argv[i] == "-W") {
+            if ((std::string)argv[i] == "--W") {
                 width = std::atoi(argv[i + 1]);
             }
 
             if ((std::string)argv[i] == "-RPP") {
-                RAYS_PER_PIXEL = std::atoi(argv[i + 1]);
+                rays_per_pixel = std::atoi(argv[i + 1]);
             }
 
             if ((std::string)argv[i] == "-MRR") {
-                MAX_RAY_REFLECTIONS = std::atoi(argv[i + 1]);
+                max_ray_reflections = std::atoi(argv[i + 1]);
             }
 
             if ((std::string)argv[i] == "-EPS") {
-                EPS = static_cast<float>(std::atof(argv[i + 1]));
+                eps = static_cast<float>(std::atof(argv[i + 1]));
             }
 
             if ((std::string)argv[i] == "-ERR") {
@@ -79,7 +77,7 @@ public:
             }
 
             if ((std::string)argv[i] == "-GAMMA") {
-                gamma_kor = static_cast<float>(std::atof(argv[i + 1]));
+                gamma_correction = static_cast<float>(std::atof(argv[i + 1]));
             }
 
             if ((std::string)argv[i] == "-SKYBOX") {

@@ -10,43 +10,49 @@
 
 class Ray {
 private:
-    glm::vec4 begin;
-    glm::vec4 dir;
-    int depth = 0;
-    glm::ivec2 coords = {0, 0};
-    glm::vec3 col = glm::vec3(1);
+    glm::vec4 begin_;
+    glm::vec4 direction_;
+    int depth_;
+    glm::ivec2 coords_;
+    glm::vec3 color_ = glm::vec3(1);
 
 public:
-    glm::vec4 getBegin() const {return begin;}
+    Ray(glm::vec4 begin, glm::vec4 direction, int depth, glm::ivec2 coords)
+            : begin_(begin),
+              direction_(normalize(direction)),
+              depth_(depth),
+              coords_(coords) {}
 
-    void setBegin(glm::vec4 bg) {begin=bg;}
+    glm::vec4 GetBegin() const { return begin_; }
 
-    glm::vec4 getDir() const {return normalize(dir);}
+    void SetBegin(glm::vec4 begin) { begin_ = begin; }
 
-    void setDir(glm::vec4 dr) {dir=dr;}
+    glm::vec4 GetDirection() const { return normalize(direction_); }
 
-    int getDepth() const {return depth;}
+    void SetDirection(glm::vec4 direction) { direction_ = direction; }
 
-    void setDepth(int dp) {depth=dp;}
+    int GetDepth() const { return depth_; }
 
-    glm::ivec2 getCoords() const {return coords;}
+    void SetDepth(int depth) { depth_ = depth; }
 
-    glm::vec3 getCol() const {return col;}
+    glm::ivec2 GetCoords() const { return coords_; }
 
-    void setCol(glm::vec3 cl) {col=cl;}
+    glm::vec3 GetColor() const { return color_; }
 
-    void reflect(glm::vec4 bg, glm::vec4 dr, glm::vec3 cl) {
-        begin = bg;
-        dir = normalize(dr);
-        col *= cl;
-        depth++;
+    void SetColor(glm::vec3 color) { color_ = color; }
+
+    void Reflect(glm::vec4 begin, glm::vec4 irection, glm::vec3 color) {
+        begin_ = begin;
+        direction_ = normalize(irection);
+        color_ *= color;
+        depth_++;
     }
 
-    bool is_valid() const {return depth < Config::get().MAX_RAY_REFLECTIONS && col != glm::vec3(0);}
+    bool IsValid() const {
+        return depth_ < Config::get().max_ray_reflections && color_ != glm::vec3(0);
+    }
 
-    void make_invalid() {depth = Config::get().MAX_RAY_REFLECTIONS;}
-
-    Ray(glm::vec4 i, glm::vec4 j, int k, glm::ivec2 l) :begin(i), dir(normalize(j)), depth(k), coords(l) {}
+    void MakeInvalid() { depth_ = Config::get().max_ray_reflections; }
 };
 
 #endif
