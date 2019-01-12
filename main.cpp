@@ -3,37 +3,10 @@
 #include "bitmap_image.hpp"
 
 #include "material.h"
+#include "triangles.h"
 
 using namespace std;
 using namespace glm;
-
-bool PlaneIntersect(Ray &ray, float &distance, vec4 plane) {
-    vec4 begin = ray.GetBegin();
-    vec4 direction = ray.GetDirection();
-    if (abs(dot(plane, direction)) < Config::get().eps) {
-        return false;
-    } else {
-        float new_distance = -dot(begin, plane) / dot(direction, plane);
-        if (distance > new_distance && new_distance > 0) {
-            distance = new_distance;
-            return true;
-        } else {
-            return false;
-        }
-    }
-}
-
-vec4 Cross(vec4 a, vec4 b) {
-    return vec4(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z,
-                a.x * b.y - a.y * b.x, 0);
-}
-
-float Square(vec4 A, vec4 B, vec4 C) {
-    vec4 AB = B - A;
-    vec4 AC = C - A;
-    vec4 cross = Cross(AB, AC);
-    return length(cross) / 2;
-}
 
 vector<string> Split(string str, char sep) {
     vector<string> ans;
@@ -116,58 +89,6 @@ vector<vector<vec3> > MedianFilter(vector<vector<vec3> > color_map,
     }
     return ans;
 }
-
-class Triangle {
-private:
-    vec4 plane_;
-    Material material_;
-    array<vec4, 3> vertices_;
-
-public:
-    Triangle(const array<vec4, 3> &vertices, Material material)
-            : vertices_(vertices), material_(material) {
-        vec4 AB = vertices_[1] - vertices_[0];
-        vec4 AC = vertices_[2] - vertices_[0];
-        plane_ = normalize(Cross(AB, AC));
-        plane_.w = -dot(plane_, vertices_[0]);
-    }
-
-    vec4 GetNormal() const { return vec4(plane_.x, plane_.y, plane_.z, 0); }
-
-    void SetNormal(vec3 normal) {
-        normal = normalize(normal);
-        plane_.x = normal.x;
-        plane_.y = normal.y;
-        plane_.z = normal.z;
-        plane_.w = 0;
-        plane_.w = -dot(plane_, vertices_[0]);
-    }
-
-    Material GetMaterial() const { return material_; }
-
-    bool Intersect(Ray &ray, float &distance) const {
-        float new_distance = INFINITY;
-        if (!PlaneIntersect(ray, new_distance, plane_)) {
-            return false;
-        }
-
-        if (new_distance >= distance) {
-            return false;
-        }
-
-        vec4 drop_point = ray.GetBegin() + ray.GetDirection() * new_distance;
-        float full_square = Square(vertices_[0], vertices_[1], vertices_[2]);
-        float small_square_1 = Square(drop_point, vertices_[1], vertices_[2]);
-        float small_square_2 = Square(vertices_[0], drop_point, vertices_[2]);
-        float small_square_3 = Square(vertices_[0], vertices_[1], drop_point);
-        if (abs(full_square - small_square_1 - small_square_2 - small_square_3) >
-            Config::get().eps) {
-            return false;
-        }
-        distance = new_distance;
-        return true;
-    }
-};
 
 class Scene {
 private:
