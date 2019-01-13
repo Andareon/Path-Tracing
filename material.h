@@ -13,7 +13,7 @@ const float pi = 3.141593;
 using MaterialProcessor = std::function<void(Ray &, glm::vec4, glm::vec4)>;
 
 inline float Random() {
-    static std::default_random_engine generator(time(0));
+    static std::default_random_engine generator(static_cast<unsigned int>(time(nullptr)));
     static std::uniform_real_distribution<float> distribution(0.0, 1.0);
     return distribution(generator);
 }
@@ -30,7 +30,7 @@ private:
 
 public:
     void Process(Ray &ray, glm::vec4 drop_point, glm::vec4 normal) {
-        if (!functions_.size()) {
+        if (functions_.empty()) {
             ray.MakeInvalid();
         } else if (functions_.size() == 1) {
             functions_[0](ray, drop_point, normal);
@@ -76,12 +76,12 @@ inline Material Factory(MaterialCharacteristics characteristics,
         auto function = [Kd](Ray &ray, glm::vec4 drop_point, glm::vec4 N) {
             float xi1 = Random(), xi2 = Random();
             glm::vec4 rnd =
-                    normalize(glm::vec4(sqrt(xi1) * cos(2 * pi * xi2),
-                                        sqrt(xi1) * sin(2 * pi * xi2), sqrt(1 - xi1), 0));
-            if (dot(N, rnd) < 0) {
+                    glm::normalize(glm::vec4(std::sqrt(xi1) * std::cos(2 * pi * xi2),
+                                        std::sqrt(xi1) * std::sin(2 * pi * xi2), std::sqrt(1 - xi1), 0));
+            if (glm::dot(N, rnd) < 0) {
                 rnd *= -1;
             }
-            float dt = std::max(0.0f, dot(N, rnd));
+            float dt = std::max(0.0f, glm::dot(N, rnd));
             ray.Reflect(drop_point + N * Config::get().eps, rnd, Kd * dt);
         };
         material.AddFunctions(function, 1);

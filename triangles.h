@@ -1,3 +1,5 @@
+#include <utility>
+
 #ifndef RAY_TRACING_TRIANGLES_H
 #define RAY_TRACING_TRIANGLES_H
 
@@ -8,10 +10,10 @@
 inline bool PlaneIntersect(Ray &ray, float &distance, glm::vec4 plane) {
     glm::vec4 begin = ray.GetBegin();
     glm::vec4 direction = ray.GetDirection();
-    if (std::abs(dot(plane, direction)) < Config::get().eps) {
+    if (std::abs(glm::dot(plane, direction)) < Config::get().eps) {
         return false;
     } else {
-        float new_distance = -dot(begin, plane) / dot(direction, plane);
+        float new_distance = -glm::dot(begin, plane) / glm::dot(direction, plane);
         if (distance > new_distance && new_distance > 0) {
             distance = new_distance;
             return true;
@@ -41,7 +43,7 @@ private:
 
 public:
     Triangle(const std::array<glm::vec4, 3> &vertices, Material material)
-            : vertices_(vertices), material_(material) {
+            : vertices_(vertices), material_(std::move(material)) {
         glm::vec4 AB = vertices_[1] - vertices_[0];
         glm::vec4 AC = vertices_[2] - vertices_[0];
         plane_ = normalize(Cross(AB, AC));

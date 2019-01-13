@@ -5,11 +5,12 @@
 
 class Config {
 private:
-    Config() {}
+    Config() = default;
+
+public:
     Config(const Config&) = delete;
     Config& operator=(Config&) = delete;
 
-public:
     int height = 512;
     int width = 512;
     int rays_per_pixel = 20;
@@ -19,7 +20,7 @@ public:
     float eps = 1e-6;
     float error = 0.001;
     int update = 32;
-    float gamma_correction = 1 / 2.2;
+    float gamma_correction = 1 / 2.2f;
     std::string model_path = "../";
     std::string model_name = "3.obj";
     std::string skybox = "";

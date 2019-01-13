@@ -41,9 +41,9 @@ public:
 
     void SetColor(glm::vec3 color) { color_ = color; }
 
-    void Reflect(glm::vec4 begin, glm::vec4 irection, glm::vec3 color) {
+    void Reflect(glm::vec4 begin, glm::vec4 direction, glm::vec3 color) {
         begin_ = begin;
-        direction_ = normalize(irection);
+        direction_ = normalize(direction);
         color_ *= color;
         depth_++;
     }

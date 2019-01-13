@@ -9,7 +9,7 @@ using namespace std;
 using namespace glm;
 
 vector<vector<vec3> > GaussBlur(vector<vector<vec3> > color_map, float r) {
-    int rs = ceil(r * 2.57);
+    const int rs = ceil(r * 2.57);
     vector<vector<vec3> > ans(Config::get().width,
                               vector<vec3>(Config::get().height, vec3(0)));
     for (int i = 0; i < Config::get().height; ++i) {
@@ -84,7 +84,7 @@ int main(int argc, char *argv[]) {
             chrono::system_clock::now().time_since_epoch());
 
     Config::get().set_config(argc, argv);
-    static default_random_engine generator(time(0));
+    static default_random_engine generator(static_cast<unsigned int>(time(nullptr)));
     static uniform_real_distribution<> distribution(-0.5f, 0.5f);
 
     vector<vector<vec3> > color_map(Config::get().width,
@@ -104,8 +104,8 @@ int main(int argc, char *argv[]) {
         for (int y = 0; y < Config::get().height; ++y) {
             #pragma omp parallel for num_threads(4)
             for (int x = 0; x < Config::get().width; ++x) {
-                float sample_count = static_cast<float>(samples_count[x][y]);
-                if (i > 10 && sample_count) {
+                const auto sample_count = static_cast<float>(samples_count[x][y]);
+                if (i > 10 && sample_count > 0) {
                     vec3 D = (color2_map[x][y] / sample_count -
                               (color_map[x][y] / sample_count) *
                               (color_map[x][y] / sample_count));
@@ -146,7 +146,7 @@ int main(int argc, char *argv[]) {
             }
             color_map[x][y] =
                     pow(color_map[x][y] / static_cast<float>(samples_count[x][y]),
-                        vec3(1 / 2.2)) *
+                        vec3(1 / 2.2f)) *
                     255.0f;
         }
     }
@@ -169,7 +169,7 @@ int main(int argc, char *argv[]) {
 
     chrono::milliseconds end_time = chrono::duration_cast<chrono::milliseconds>(
             chrono::system_clock::now().time_since_epoch());
-    time_t t = time(0);
+    time_t t = time(nullptr);
     struct tm *now = localtime(&t);
     string date = to_string(now->tm_year + 1900) + '-' +
                   to_string(now->tm_mon + 1) + '-' + to_string(now->tm_mday) +
