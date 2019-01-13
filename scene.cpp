@@ -46,7 +46,7 @@ void Scene::LoadModel(string path) {
             ifstream mtl_file(Config::get().model_path + mtl_file_name);
 
             string mtl_input = "1";
-            MaterialCharacteristics characteristics = {0};
+            MaterialCharacteristics characteristics = {};
             while (!mtl_file.eof()) {
                 while (!mtl_file.eof() && mtl_input != "newmtl") {
                     mtl_file >> mtl_input;
