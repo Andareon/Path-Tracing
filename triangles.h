@@ -5,7 +5,7 @@
 
 #include "material.h"
 
-bool PlaneIntersect(Ray &ray, float &distance, glm::vec4 plane) {
+inline bool PlaneIntersect(Ray &ray, float &distance, glm::vec4 plane) {
     glm::vec4 begin = ray.GetBegin();
     glm::vec4 direction = ray.GetDirection();
     if (std::abs(dot(plane, direction)) < Config::get().eps) {
@@ -21,12 +21,12 @@ bool PlaneIntersect(Ray &ray, float &distance, glm::vec4 plane) {
     }
 }
 
-glm::vec4 Cross(glm::vec4 a, glm::vec4 b) {
+inline glm::vec4 Cross(glm::vec4 a, glm::vec4 b) {
     return glm::vec4(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z,
                 a.x * b.y - a.y * b.x, 0);
 }
 
-float Square(glm::vec4 A, glm::vec4 B, glm::vec4 C) {
+inline float Square(glm::vec4 A, glm::vec4 B, glm::vec4 C) {
     glm::vec4 AB = B - A;
     glm::vec4 AC = C - A;
     glm::vec4 cross = Cross(AB, AC);

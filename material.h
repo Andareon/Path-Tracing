@@ -4,13 +4,15 @@
 #include <functional>
 #include <random>
 
+#include <ctime>
+
 #include "ray.h"
 
 const float pi = 3.141593;
 
 using MaterialProcessor = std::function<void(Ray &, glm::vec4, glm::vec4)>;
 
-float Random() {
+inline float Random() {
     static std::default_random_engine generator(time(0));
     static std::uniform_real_distribution<float> distribution(0.0, 1.0);
     return distribution(generator);
@@ -49,7 +51,7 @@ public:
     }
 };
 
-Material Factory(MaterialCharacteristics characteristics,
+inline Material Factory(MaterialCharacteristics characteristics,
                  std::vector<std::vector<glm::vec3> > &color_map,
                  std::vector<std::vector<glm::vec3> > &color2_map,
                  std::vector<std::vector<int> > &samples_count) {
