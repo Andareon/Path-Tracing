@@ -61,7 +61,7 @@ inline Material Factory(MaterialCharacteristics characteristics,
     if (Ke != glm::vec3(0)) {
         auto function = [&color_map, &color2_map, &samples_count, Kd](
                 Ray &ray, glm::vec4 drop_point, glm::vec4 N) {
-            if (dot(ray.GetDirection(), N) < 0) {
+            if (dot(ray.GetDirection(), N) > 0) {
                 ray.MakeInvalid();
                 return;
             }
