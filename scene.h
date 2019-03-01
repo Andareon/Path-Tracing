@@ -1,7 +1,3 @@
-//
-// Created by alex on 13.01.2019.
-//
-
 #ifndef RAY_TRACING_SCENE_H
 #define RAY_TRACING_SCENE_H
 

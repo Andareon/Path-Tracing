@@ -25,7 +25,7 @@ inline bool PlaneIntersect(Ray &ray, float &distance, glm::vec4 plane) {
 
 inline glm::vec4 Cross(glm::vec4 a, glm::vec4 b) {
     return glm::vec4(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z,
-                a.x * b.y - a.y * b.x, 0);
+                     a.x * b.y - a.y * b.x, 0);
 }
 
 inline float Square(glm::vec4 A, glm::vec4 B, glm::vec4 C) {

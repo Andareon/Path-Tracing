@@ -52,9 +52,9 @@ public:
 };
 
 inline Material Factory(MaterialCharacteristics characteristics,
-                 std::vector<std::vector<glm::vec3> > &color_map,
-                 std::vector<std::vector<glm::vec3> > &color2_map,
-                 std::vector<std::vector<int> > &samples_count) {
+                        std::vector<std::vector<glm::vec3> > &color_map,
+                        std::vector<std::vector<glm::vec3> > &color2_map,
+                        std::vector<std::vector<int> > &samples_count) {
     glm::vec3 Kd = characteristics.Kd;
     glm::vec3 Ke = characteristics.Ke;
     Material material;
@@ -77,7 +77,7 @@ inline Material Factory(MaterialCharacteristics characteristics,
             float xi1 = Random(), xi2 = Random();
             glm::vec4 rnd =
                     glm::normalize(glm::vec4(std::sqrt(xi1) * std::cos(2 * pi * xi2),
-                                        std::sqrt(xi1) * std::sin(2 * pi * xi2), std::sqrt(1 - xi1), 0));
+                                             std::sqrt(xi1) * std::sin(2 * pi * xi2), std::sqrt(1 - xi1), 0));
             if (glm::dot(N, rnd) < 0) {
                 rnd *= -1;
             }

@@ -1,7 +1,3 @@
-//
-// Created by alex on 13.01.2019.
-//
-
 #include "scene.h"
 
 using namespace std;
@@ -18,9 +14,9 @@ static vector<string> Split(const string &str, char sep) {
 }
 
 Scene::Scene(vector<vector<vec3>> &color_map, vector<vector<vec3>> &color2_map, vector<vector<int> > &samples_count)
-: color_map_(color_map),
-color2_map_(color2_map),
-samples_count_(samples_count) {
+        : color_map_(color_map),
+          color2_map_(color2_map),
+          samples_count_(samples_count) {
     if (!Config::get().skybox.empty()) {
         skybox_ = bitmap_image(Config::get().skybox);
     }
@@ -92,8 +88,8 @@ void Scene::LoadModel(string path) {
                 normal_index[i] = atoi(cur[2].c_str()) - 1;
             }
             triangles_.emplace_back(array<vec4, 3>{temp_vertices[vertex_index[0]],
-                                                             temp_vertices[vertex_index[1]],
-                                                             temp_vertices[vertex_index[2]]},
+                                                   temp_vertices[vertex_index[1]],
+                                                   temp_vertices[vertex_index[2]]},
                                     materials_[current_material]);
             if (normal_index[0] >= 0) {
                 triangles_.back().SetNormal(temp_normals[normal_index[0]]);
