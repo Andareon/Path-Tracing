@@ -6,6 +6,7 @@
 class Config {
 private:
     Config() = default;
+    int seed = 42;
 
 public:
     Config(const Config&) = delete;
@@ -84,7 +85,16 @@ public:
             if ((std::string)argv[i] == "-SKYBOX") {
                 skybox = argv[i + 1];
             }
+
+            if (std::string(argv[i]) == "--seed") {
+                seed = std::atoi(argv[i + 1]);
+            }
         }
+    }
+
+    unsigned getSeed() const
+    {
+        return  Config::get().seed < 0 ? static_cast<unsigned>(time(nullptr)) : Config::get().seed;
     }
 };
 

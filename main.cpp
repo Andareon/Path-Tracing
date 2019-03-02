@@ -84,7 +84,7 @@ int main(int argc, char *argv[]) {
             chrono::system_clock::now().time_since_epoch());
 
     Config::get().set_config(argc, argv);
-    static default_random_engine generator(static_cast<unsigned int>(time(nullptr)));
+    static default_random_engine generator(Config::get().getSeed());
     static uniform_real_distribution<> distribution(-0.5f, 0.5f);
 
     vector<vector<vec3> > color_map(Config::get().width,
