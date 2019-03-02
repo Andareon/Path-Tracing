@@ -103,7 +103,7 @@ int main(int argc, char *argv[]) {
     std::vector<Ray> rays;
     rays.resize(Config::get().height * Config::get().width);
     for (int i = 0; i < Config::get().rays_per_pixel; ++i) {
-#pragma omp parallel for num_threads(4)
+#pragma omp parallel for num_threads(THREADS_TO_RUN)
         for (int y = 0; y < Config::get().height; ++y) {
             for (int x = 0; x < Config::get().width; ++x) {
                 const auto sample_count = static_cast<float>(samples_count[x][y]);
@@ -122,7 +122,7 @@ int main(int argc, char *argv[]) {
                 rays[y * Config::get().width + x] = Ray(vec4(0, 0, -20, 1), direction, 0, ivec2(x, y));
             }
         }
-#pragma omp parallel for num_threads(4)
+#pragma omp parallel for num_threads(THREADS_TO_RUN)
         for (int y = 0; y < Config::get().height; ++y) {
             for (int x = 0; x < Config::get().width; ++x) {
                 Ray &ray = rays[y * Config::get().width + x];
@@ -131,7 +131,7 @@ int main(int argc, char *argv[]) {
                 }
             }
         }
-#pragma omp parallel for num_threads(4)
+#pragma omp parallel for num_threads(THREADS_TO_RUN)
         for (int y = 0; y < Config::get().height; ++y) {
             for (int x = 0; x < Config::get().width; ++x) {
                 if (i % Config::get().update == 0) {
