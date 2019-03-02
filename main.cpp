@@ -100,9 +100,11 @@ int main(int argc, char *argv[]) {
     bitmap_image image(Config::get().width, Config::get().height);
 
     image.clear();
+    std::vector<Ray> rays;
+    rays.resize(Config::get().height * Config::get().width);
     for (int i = 0; i < Config::get().rays_per_pixel; ++i) {
+#pragma omp parallel for num_threads(4)
         for (int y = 0; y < Config::get().height; ++y) {
-            #pragma omp parallel for num_threads(4)
             for (int x = 0; x < Config::get().width; ++x) {
                 const auto sample_count = static_cast<float>(samples_count[x][y]);
                 if (i > 10 && sample_count > 0) {
@@ -117,10 +119,21 @@ int main(int argc, char *argv[]) {
                 vec4 direction = vec4(
                         (x + distribution(generator)) / Config::get().width - 0.5f,
                         -(y + distribution(generator)) / Config::get().height + 0.5f, 1, 0);
-                Ray ray = Ray(vec4(0, 0, -20, 1), direction, 0, ivec2(x, y));
+                rays[y * Config::get().width + x] = Ray(vec4(0, 0, -20, 1), direction, 0, ivec2(x, y));
+            }
+        }
+#pragma omp parallel for num_threads(4)
+        for (int y = 0; y < Config::get().height; ++y) {
+            for (int x = 0; x < Config::get().width; ++x) {
+                Ray &ray = rays[y * Config::get().width + x];
                 while (ray.IsValid()) {
                     scene.TraceRay(ray);
                 }
+            }
+        }
+#pragma omp parallel for num_threads(4)
+        for (int y = 0; y < Config::get().height; ++y) {
+            for (int x = 0; x < Config::get().width; ++x) {
                 if (i % Config::get().update == 0) {
                     if (samples_count[x][y]) {
                         vec3 c =

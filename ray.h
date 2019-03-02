@@ -10,13 +10,14 @@
 
 class Ray {
 private:
-    glm::vec4 begin_;
-    glm::vec4 direction_;
-    int depth_;
-    glm::ivec2 coords_;
+    glm::vec4 begin_ = glm::vec4(0);
+    glm::vec4 direction_ = glm::vec4(0);
+    int depth_ = 0;
+    glm::ivec2 coords_ = glm::vec2(0);
     glm::vec3 color_ = glm::vec3(1);
 
 public:
+    Ray() = default;
     Ray(glm::vec4 begin, glm::vec4 direction, int depth, glm::ivec2 coords)
             : begin_(begin),
               direction_(normalize(direction)),
