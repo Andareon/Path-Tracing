@@ -21,8 +21,8 @@ public:
     float error = 0.001;
     int update = 32;
     float gamma_correction = 1 / 2.2f;
-    std::string model_path = "../";
-    std::string model_name = "3.obj";
+    std::string model_path = "../models/";
+    std::string model_name = "Tor.obj";
     std::string skybox = "";
     static Config& get() {
         static Config instance;
