@@ -29,9 +29,9 @@ void Scene::LoadModel(string path) {
     vector<vec3> temp_normals;
     ifstream file(path);
     string input;
-    if (file.eof()) {
-        cout << "Impossible to open the file !" << endl;
-        return;
+    if (!file.is_open()) {
+        cerr << "Impossible to open the file !" << endl;
+        exit(1);
     }
     int current_material = 0;
     while (!file.eof()) {
