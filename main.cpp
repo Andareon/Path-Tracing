@@ -102,7 +102,8 @@ int main(int argc, char *argv[]) {
     image.clear();
     std::vector<Ray> rays;
     rays.resize(Config::get().height * Config::get().width);
-    for (int i = 0; i < Config::get().rays_per_pixel; ++i) {
+    int rays_count = 0;
+    for (rays_count = 0; rays_count < Config::get().rays_per_pixel; ++rays_count) {
         chrono::milliseconds cur_time = chrono::duration_cast<chrono::milliseconds>(
                 chrono::system_clock::now().time_since_epoch());
         if (Config::get().time_limit != 0 && (cur_time - start_time).count() >= 1000 * Config::get().time_limit) {
@@ -112,11 +113,11 @@ int main(int argc, char *argv[]) {
         for (int y = 0; y < Config::get().height; ++y) {
             for (int x = 0; x < Config::get().width; ++x) {
                 const auto sample_count = static_cast<float>(samples_count[x][y]);
-                if (i > 10 && sample_count > 0) {
+                if (rays_count > 10 && sample_count > 0) {
                     vec3 D = (color2_map[x][y] / sample_count -
                               (color_map[x][y] / sample_count) *
                               (color_map[x][y] / sample_count));
-                    if ((i % 4) && D.r < Config::get().error &&
+                    if ((rays_count % 4) && D.r < Config::get().error &&
                         D.g < Config::get().error && D.b < Config::get().error) {
                         continue;
                     }
@@ -139,7 +140,7 @@ int main(int argc, char *argv[]) {
 #pragma omp parallel for num_threads(THREADS_TO_RUN)
         for (int y = 0; y < Config::get().height; ++y) {
             for (int x = 0; x < Config::get().width; ++x) {
-                if (Config::get().update != 0 && i % Config::get().update == 0) {
+                if (Config::get().update != 0 && rays_count % Config::get().update == 0) {
                     if (samples_count[x][y]) {
                         vec3 c =
                                 pow(color_map[x][y] / static_cast<float>(samples_count[x][y]),
@@ -150,18 +151,32 @@ int main(int argc, char *argv[]) {
                 }
             }
         }
-        if (Config::get().update != 0 && i % Config::get().update == 0) {
+        if (Config::get().update != 0 && rays_count % Config::get().update == 0) {
             image.save_image("../result.bmp");
             cerr << "Image update" << endl;
         }
-        cerr << i + 1 << " rays per pixel were sent" << endl;
+        cerr << rays_count + 1 << " rays per pixel were sent" << endl;
     }
 
+    float max_dispersion = 0, min_dispersion = INFINITY, average_dispersion = 0;
     for (int y = 0; y < Config::get().height; ++y) {
         for (int x = 0; x < Config::get().width; ++x) {
             if (!samples_count[x][y]) {
+                average_dispersion += 1;
                 continue;
             }
+            const auto sample_count = static_cast<float>(samples_count[x][y]);
+            vec3 D = (color2_map[x][y] / sample_count -
+                      (color_map[x][y] / sample_count) *
+                      (color_map[x][y] / sample_count));
+            float disp = D.r + D.g + D.b;
+            if (disp > max_dispersion) {
+                max_dispersion = disp;
+            }
+            if (disp < min_dispersion) {
+                min_dispersion = disp;
+            }
+            average_dispersion += disp;
             color_map[x][y] =
                     pow(color_map[x][y] / static_cast<float>(samples_count[x][y]),
                         vec3(1 / 2.2f)) *
@@ -193,8 +208,9 @@ int main(int argc, char *argv[]) {
                   to_string(now->tm_mon + 1) + '-' + to_string(now->tm_mday) +
                   '-' + to_string(now->tm_hour) + '-' + to_string(now->tm_min) +
                   '-' + to_string(now->tm_sec) + "  " +
-                  to_string((end_time - start_time).count()) + "   " +
-                  to_string(Config::get().rays_per_pixel);
+                  to_string((end_time - start_time).count()) + "   " + to_string(rays_count) + " of " +
+                  to_string(Config::get().rays_per_pixel) + "  max_disp " + to_string(max_dispersion)
+                  + "  min_disp " + to_string(min_dispersion) + "  aver_disp " + to_string(average_dispersion / Config::get().width / Config::get().height);
     image.save_image(date + ".bmp");
     image.save_image("../result.bmp");
 }
