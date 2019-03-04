@@ -103,6 +103,11 @@ int main(int argc, char *argv[]) {
     std::vector<Ray> rays;
     rays.resize(Config::get().height * Config::get().width);
     for (int i = 0; i < Config::get().rays_per_pixel; ++i) {
+        chrono::milliseconds cur_time = chrono::duration_cast<chrono::milliseconds>(
+                chrono::system_clock::now().time_since_epoch());
+        if (Config::get().time_limit != 0 && (cur_time - start_time).count() >= 1000 * Config::get().time_limit) {
+            break;
+        }
 #pragma omp parallel for num_threads(THREADS_TO_RUN)
         for (int y = 0; y < Config::get().height; ++y) {
             for (int x = 0; x < Config::get().width; ++x) {

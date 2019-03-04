@@ -25,6 +25,7 @@ public:
     std::string model_path = "../models/";
     std::string model_name = "Tor.obj";
     std::string skybox = "";
+    int time_limit = 0;
     static Config& get() {
         static Config instance;
         return instance;
@@ -86,8 +87,12 @@ public:
                 skybox = argv[i + 1];
             }
 
-            if (std::string(argv[i]) == "--seed") {
+            if (std::string(argv[i]) == "-SEED") {
                 seed = std::atoi(argv[i + 1]);
+            }
+
+            if (std::string(argv[i]) == "-TL") {
+                time_limit = std::atoi(argv[i + 1]);
             }
         }
     }
