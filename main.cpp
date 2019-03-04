@@ -134,7 +134,7 @@ int main(int argc, char *argv[]) {
 #pragma omp parallel for num_threads(THREADS_TO_RUN)
         for (int y = 0; y < Config::get().height; ++y) {
             for (int x = 0; x < Config::get().width; ++x) {
-                if (i % Config::get().update == 0) {
+                if (Config::get().update != 0 && i % Config::get().update == 0) {
                     if (samples_count[x][y]) {
                         vec3 c =
                                 pow(color_map[x][y] / static_cast<float>(samples_count[x][y]),
@@ -145,8 +145,8 @@ int main(int argc, char *argv[]) {
                 }
             }
         }
-        if (i % Config::get().update == 0) {
-            image.save_image("result.bmp");
+        if (Config::get().update != 0 && i % Config::get().update == 0) {
+            image.save_image("../result.bmp");
             cerr << "Image update" << endl;
         }
         cerr << i + 1 << " rays per pixel were sent" << endl;
@@ -191,5 +191,5 @@ int main(int argc, char *argv[]) {
                   to_string((end_time - start_time).count()) + "   " +
                   to_string(Config::get().rays_per_pixel);
     image.save_image(date + ".bmp");
-    image.save_image("result.bmp");
+    image.save_image("../result.bmp");
 }
