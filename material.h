@@ -7,6 +7,7 @@
 #include <ctime>
 
 #include "ray.h"
+#include "timer.h"
 
 const float pi = 3.141593;
 
@@ -30,6 +31,7 @@ private:
 
 public:
     void Process(Ray &ray, glm::vec4 drop_point, glm::vec4 normal) {
+//        Timer timer("Material process");
         if (functions_.empty()) {
             ray.MakeInvalid();
         } else if (functions_.size() == 1) {
@@ -59,6 +61,7 @@ inline Material Factory(MaterialCharacteristics characteristics,
     glm::vec3 Ke = characteristics.Ke;
     Material material;
     if (Ke != glm::vec3(0)) {
+        Timer timer("emmisive");
         auto function = [&color_map, &color2_map, &samples_count, Kd](
                 Ray &ray, glm::vec4 drop_point, glm::vec4 N) {
             if (dot(ray.GetDirection(), N) > 0) {

@@ -8,6 +8,7 @@
 #include "material.h"
 
 inline bool PlaneIntersect(Ray &ray, float &distance, glm::vec4 plane) {
+//    Timer timer("Intersect with plane");
     glm::vec4 begin = ray.GetBegin();
     glm::vec4 direction = ray.GetDirection();
     if (std::abs(glm::dot(plane, direction)) < Config::get().eps) {

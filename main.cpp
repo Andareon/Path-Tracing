@@ -104,6 +104,7 @@ int main(int argc, char *argv[]) {
     rays.resize(Config::get().height * Config::get().width);
     int rays_count = 0;
     for (rays_count = 0; rays_count < Config::get().rays_per_pixel; ++rays_count) {
+//        Timer timer("For 1 ray per pixel");
         chrono::milliseconds cur_time = chrono::duration_cast<chrono::milliseconds>(
                 chrono::system_clock::now().time_since_epoch());
         if (Config::get().time_limit != 0 && (cur_time - start_time).count() >= 1000 * Config::get().time_limit) {
@@ -133,6 +134,7 @@ int main(int argc, char *argv[]) {
             for (int x = 0; x < Config::get().width; ++x) {
                 Ray &ray = rays[y * Config::get().width + x];
                 while (ray.IsValid()) {
+//                    Timer timer("Tracing");
                     scene.TraceRay(ray);
                 }
             }
@@ -213,4 +215,5 @@ int main(int argc, char *argv[]) {
                   + "  min_disp " + to_string(min_dispersion) + "  aver_disp " + to_string(average_dispersion / Config::get().width / Config::get().height);
     image.save_image(date + ".bmp");
     image.save_image("../result.bmp");
+    TimerStorage::get().PrintTimers();
 }
