@@ -7,10 +7,10 @@
 
 class TimerStorage {
     struct TimerSummary {
-        int minValue;
-        int maxValue;
-        int sum;
-        int count;
+        long long minValue;
+        long long maxValue;
+        long long sum;
+        long long count;
     };
 private:
     TimerStorage() = default;
@@ -24,7 +24,7 @@ public:
         return instance;
     }
 
-    void AddTimerValue(const std::string &timer_name, int time) {
+    void AddTimerValue(const std::string &timer_name, long long time) {
         timers[timer_name].sum += time;
         timers[timer_name].count++;
         timers[timer_name].maxValue = std::max(timers[timer_name].maxValue, time);
@@ -33,7 +33,7 @@ public:
 
     void PrintTimers() {
         for (auto it = timers.begin(); it != timers.end(); it++) {
-            std::cout << it->first << " " << it->second.maxValue << " " << (float)it->second.sum / it->second.count <<
+            std::cout << it->first << " " << it->second.minValue << " " << (float)it->second.sum / it->second.count <<
                          " " << it->second.maxValue << std::endl;
         }
     }
@@ -42,17 +42,17 @@ public:
 class Timer {
 private:
     std::string timer_name_;
-    std::chrono::milliseconds start_time_;
+    std::chrono::microseconds start_time_;
 
 public:
     Timer(std::string name)
               : timer_name_(std::move(name)) {
-        start_time_ = std::chrono::duration_cast<std::chrono::milliseconds>(
+        start_time_ = std::chrono::duration_cast<std::chrono::microseconds>(
                 std::chrono::system_clock::now().time_since_epoch());
     }
 
     ~Timer() {
-        std::chrono::milliseconds end_time = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::microseconds end_time = std::chrono::duration_cast<std::chrono::microseconds>(
                 std::chrono::system_clock::now().time_since_epoch());
         TimerStorage::get().AddTimerValue(timer_name_, (end_time - start_time_).count());
     }
