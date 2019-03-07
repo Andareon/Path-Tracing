@@ -7,10 +7,10 @@
 
 class TimerStorage {
     struct TimerSummary {
-        long long minValue;
-        long long maxValue;
-        long long sum;
-        long long count;
+        long long minValue = std::numeric_limits<long long>::max();
+        long long maxValue = 0;
+        long long sum = 0;
+        long long count = 0;
     };
 private:
     TimerStorage() = default;
