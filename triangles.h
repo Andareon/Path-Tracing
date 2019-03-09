@@ -8,8 +8,8 @@
 #include "material.h"
 
 inline float PlaneIntersect(const Ray &ray, const glm::vec4& plane) {
-    const float signedDistToPlane = glm::dot(ray.GetDirection(), plane);
-    return -glm::dot(ray.GetBegin(), plane) / signedDistToPlane;
+    const float signedDistToPlane = ray.GetDirection().x * plane.x + ray.GetDirection().y * plane.y + ray.GetDirection().z * plane.z;
+    return -(ray.GetBegin().x * plane.x + ray.GetBegin().y * plane.y + ray.GetBegin().z * plane.z + plane.w) / signedDistToPlane;
 }
 
 inline float ParallelogramSquare(const glm::vec3 &dir1, const glm::vec3 &dir2) {
@@ -57,9 +57,14 @@ public:
         const glm::vec3 fromVert1 = drop_point - vertices_[1];
         const glm::vec3 fromVert2 = drop_point - vertices_[2];
         const float small_square_1 = ParallelogramSquare(fromVert0, fromVert1);
+        if (small_square_1 > square + Config::get().eps) {
+            return false;
+        }
         const float small_square_2 = ParallelogramSquare(fromVert0, fromVert2);
+        if (small_square_1 + small_square_2 > square + Config::get().eps) {
+            return false;
+        }
         const float small_square_3 = ParallelogramSquare(fromVert2, fromVert1);
-
         if (std::abs(square - small_square_1 - small_square_2 - small_square_3) > Config::get().eps) {
             return false;
         }
