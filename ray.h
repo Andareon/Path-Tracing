@@ -20,7 +20,7 @@ public:
     Ray() = default;
     Ray(glm::vec4 begin, glm::vec4 direction, int depth, glm::ivec2 coords)
             : begin_(begin),
-              direction_(normalize(direction)),
+              direction_(glm::normalize(direction)),
               depth_(depth),
               coords_(coords) {}
 
@@ -28,9 +28,9 @@ public:
 
     void SetBegin(glm::vec4 begin) { begin_ = begin; }
 
-    glm::vec4 GetDirection() const { return normalize(direction_); }
+    glm::vec4 GetDirection() const { return direction_; }
 
-    void SetDirection(glm::vec4 direction) { direction_ = direction; }
+    void SetDirection(glm::vec4 direction) { direction_ = glm::normalize(direction); }
 
     int GetDepth() const { return depth_; }
 
