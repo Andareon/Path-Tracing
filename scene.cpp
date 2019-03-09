@@ -36,6 +36,9 @@ void Scene::LoadModel(string path) {
     int current_material = 0;
     while (!file.eof()) {
         file >> input;
+        if (file.eof()) {
+            break;
+        }
         if (input == "mtllib") {
             string mtl_file_name;
             file >> mtl_file_name;
