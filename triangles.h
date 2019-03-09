@@ -7,21 +7,9 @@
 
 #include "material.h"
 
-inline bool PlaneIntersect(const Ray &ray, float &distance, glm::vec4 plane) {
-    const glm::vec4 begin = ray.GetBegin();
-    const glm::vec4 direction = ray.GetDirection();
-    const float signedDistToPlane = glm::dot(direction, plane);
-    if (std::abs(signedDistToPlane) < Config::get().eps) {
-        return false;
-    } else {
-        float new_distance = -glm::dot(begin, plane) / signedDistToPlane;
-        if (distance > new_distance && new_distance > 0) {
-            distance = new_distance;
-            return true;
-        } else {
-            return false;
-        }
-    }
+inline float PlaneIntersect(const Ray &ray, const glm::vec4& plane) {
+    const float signedDistToPlane = glm::dot(ray.GetDirection(), plane);
+    return -glm::dot(ray.GetBegin(), plane) / signedDistToPlane;
 }
 
 inline float ParallelogramSquare(const glm::vec3 &dir1, const glm::vec3 &dir2) {
@@ -58,12 +46,9 @@ public:
     Material GetMaterial() const { return material_; }
 
     bool Intersect(const Ray &ray, float &distance) const {
-        float new_distance = INFINITY;
-        if (!PlaneIntersect(ray, new_distance, plane_)) {
-            return false;
-        }
+        const float new_distance = PlaneIntersect(ray, plane_);
 
-        if (new_distance >= distance) {
+        if (new_distance >= distance || new_distance < Config::get().eps) {
             return false;
         }
 
