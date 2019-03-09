@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="Project files" pattern="file:CMakeLists.txt||file:config.h||file:main.cpp||file:material.h||file:ray.h||file:scene.cpp||file:scene.h||file:timer.h||file:triangles.h" />
+</component>
