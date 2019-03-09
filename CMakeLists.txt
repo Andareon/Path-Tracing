@@ -13,7 +13,4 @@ endif()
 find_package(glm REQUIRED)
 include_directories(${GLM_INCLUDE_DIRS})
 
-include_directories(../Libs/assimp)
-include_directories(../Libs)
-
 add_executable(Ray_Tracing main.cpp scene.cpp)
