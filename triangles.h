@@ -71,6 +71,10 @@ public:
         distance = new_distance;
         return true;
     }
+
+    std::array<glm::vec3, 3> GetVertices() const {
+        return vertices_;
+    }
 };
 
 
