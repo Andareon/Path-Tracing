@@ -24,7 +24,7 @@ private:
     std::vector<int> trianglesIndex_;
     std::vector<Triangle> &triangles_;
 public:
-    Leave(std::vector<int> trianglesIndex, std::vector<Triangle> &triangles) : trianglesIndex_(trianglesIndex),
+    Leave(std::vector<int> trianglesIndex, std::vector<Triangle> &triangles) : trianglesIndex_(std::move(trianglesIndex)),
     triangles_(triangles){}
 };
 
@@ -47,36 +47,35 @@ public:
 
         if (x > y && x > z) {
             plane_ = x / 2;
-            leftBB.max.x = plane_;
-            rightBB.min.x = plane_;
             planeCoord = 0;
         }
 
         if (y > x && y > z) {
             plane_ = y / 2;
-            leftBB.max.y = plane_;
-            rightBB.min.y = plane_;
             planeCoord = 1;
         }
 
         if (z > x && z > y) {
             plane_ = z / 2;
-            leftBB.max.z = plane_;
-            rightBB.min.z = plane_;
             planeCoord = 2;
         }
+
+        leftBB.max[planeCoord] = plane_;
+        rightBB.min[planeCoord] = plane_;
 
         std::vector<int> leftTriangles;
         std::vector<int> rightTriangles;
 
         for (int i: triangles) {
-            if (triangles_[i].GetVertices()[0][planeCoord ]< plane_ || triangles_[i].GetVertices()[1][planeCoord ]< plane_ ||
-                triangles_[i].GetVertices()[2][planeCoord ]< plane_) {
+            int minCoord = std::min(triangles_[i].GetVertices()[0][planeCoord], triangles_[i].GetVertices()[1][planeCoord],
+                             triangles_[i].GetVertices()[2][planeCoord]);
+            int maxCoord = std::max(triangles_[i].GetVertices()[0][planeCoord], triangles_[i].GetVertices()[1][planeCoord],
+                                    triangles_[i].GetVertices()[2][planeCoord]);
+            if (minCoord <= plane_) {
                 leftTriangles.push_back(i);
             }
 
-            if (triangles_[i].GetVertices()[0][planeCoord]> plane_ || triangles_[i].GetVertices()[1][planeCoord ]> plane_ ||
-                triangles_[i].GetVertices()[2][planeCoord ]> plane_) {
+            if (maxCoord >= plane_) {
                 rightTriangles.push_back(i);
             }
         }
