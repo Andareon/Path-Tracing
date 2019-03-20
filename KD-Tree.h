@@ -10,6 +10,17 @@
 struct BoundingBox {
     glm::vec3 min;
     glm::vec3 max;
+
+    BoundingBox() : max(std::numeric_limits<float>::min()), min(std::numeric_limits<float>::max()) {}
+    explicit BoundingBox(const Triangle& triangle) :
+        max(std::numeric_limits<float>::min()),
+        min(std::numeric_limits<float>::max())
+    {
+        for (const auto& vertex : triangle.GetVertices()) {
+            max = glm::max(vertex, max);
+            min = glm::min(vertex, min);
+        }
+    }
 };
 
 class BaseNode {
@@ -36,47 +47,35 @@ private:
     int planeCoord_;
     float plane_;
 public:
-    Node(std::vector<int> triangles, int depth, BoundingBox BB, std::vector<Triangle> &triangles_) {
+    Node(const std::vector<int> &triangles, int depth, BoundingBox BB, std::vector<Triangle> &triangles_) {
         depth_ = depth;
         int planeCoord = 0;
         BoundingBox leftBB = BB;
         BoundingBox rightBB = BB;
-        float x = BB.max.x - BB.min.x;
-        float y = BB.max.y - BB.min.y;
-        float z = BB.max.z - BB.min.z;
-
-        if (x > y && x > z) {
-            plane_ = x / 2;
+        const glm::vec3 bbSides = BB.max - BB.min;
+        if (bbSides.x > bbSides.y && bbSides.x > bbSides.z) {
             planeCoord = 0;
-        }
-
-        if (y > x && y > z) {
-            plane_ = y / 2;
+        } else if (bbSides.y > bbSides.x && bbSides.y > bbSides.z) {
             planeCoord = 1;
-        }
-
-        if (z > x && z > y) {
-            plane_ = z / 2;
+        } else {
             planeCoord = 2;
         }
 
+        plane_ = bbSides[planeCoord] * 0.5;
         leftBB.max[planeCoord] = plane_;
         rightBB.min[planeCoord] = plane_;
 
         std::vector<int> leftTriangles;
         std::vector<int> rightTriangles;
 
-        for (int i: triangles) {
-            int minCoord = std::min(triangles_[i].GetVertices()[0][planeCoord], triangles_[i].GetVertices()[1][planeCoord],
-                             triangles_[i].GetVertices()[2][planeCoord]);
-            int maxCoord = std::max(triangles_[i].GetVertices()[0][planeCoord], triangles_[i].GetVertices()[1][planeCoord],
-                                    triangles_[i].GetVertices()[2][planeCoord]);
-            if (minCoord <= plane_) {
-                leftTriangles.push_back(i);
+        for (int triangle_id: triangles) {
+            const BoundingBox triangleBB = BoundingBox(triangles_[triangle_id]);
+            if (triangleBB.min[planeCoord] <= plane_) {
+                leftTriangles.push_back(triangle_id);
             }
 
-            if (maxCoord >= plane_) {
-                rightTriangles.push_back(i);
+            if (triangleBB.max[planeCoord] >= plane_) {
+                rightTriangles.push_back(triangle_id);
             }
         }
 
