@@ -32,12 +32,17 @@ public:
     }
 
     void PrintTimers() {
-        for (auto it = timers.begin(); it != timers.end(); it++) {
-            std::cout << it->first << " " << it->second.minValue << " " << (float)it->second.sum / it->second.count <<
-                         " " << it->second.maxValue << std::endl;
+        for (auto &timer : timers) {
+            std::cout << timer.first << " " << timer.second.minValue << " " << (float) timer.second.sum / timer.second.count <<
+                         " " << timer.second.maxValue << std::endl;
         }
     }
 };
+
+template<typename T>
+T get_current_time() {
+    return std::chrono::duration_cast<T>(std::chrono::system_clock::now().time_since_epoch());
+}
 
 class Timer {
 private:
@@ -45,15 +50,13 @@ private:
     std::chrono::microseconds start_time_;
 
 public:
-    Timer(std::string name)
-              : timer_name_(std::move(name)) {
-        start_time_ = std::chrono::duration_cast<std::chrono::microseconds>(
-                std::chrono::system_clock::now().time_since_epoch());
-    }
+    explicit Timer(std::string name) :
+        timer_name_(std::move(name)),
+        start_time_(get_current_time<std::chrono::microseconds>())
+    {}
 
     ~Timer() {
-        std::chrono::microseconds end_time = std::chrono::duration_cast<std::chrono::microseconds>(
-                std::chrono::system_clock::now().time_since_epoch());
+        std::chrono::microseconds end_time = get_current_time<std::chrono::microseconds>();
         TimerStorage::get().AddTimerValue(timer_name_, (end_time - start_time_).count());
     }
 };

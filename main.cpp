@@ -79,13 +79,17 @@ vector<vector<vec3> > MedianFilter(vector<vector<vec3> > color_map,
     return ans;
 }
 
+template<typename T>
+inline T sqr(const T& t) {
+    return t * t;
+}
+
 int main(int argc, char *argv[]) {
-    chrono::milliseconds start_time = chrono::duration_cast<chrono::milliseconds>(
-            chrono::system_clock::now().time_since_epoch());
+    const chrono::milliseconds start_time = get_current_time<chrono::milliseconds>();
 
     Config::get().set_config(argc, argv);
-    static default_random_engine generator(Config::get().getSeed());
-    static uniform_real_distribution<> distribution(-0.5f, 0.5f);
+    default_random_engine generator(Config::get().getSeed());
+    uniform_real_distribution<> distribution(-0.5f, 0.5f);
 
     vector<vector<vec3> > color_map(Config::get().width,
                                     vector<vec3>(Config::get().height, vec3(0)));
@@ -104,8 +108,7 @@ int main(int argc, char *argv[]) {
     rays.resize(Config::get().height * Config::get().width);
     int rays_count = 0;
     for (rays_count = 0; rays_count < Config::get().rays_per_pixel; ++rays_count) {
-        chrono::milliseconds cur_time = chrono::duration_cast<chrono::milliseconds>(
-                chrono::system_clock::now().time_since_epoch());
+        const chrono::milliseconds cur_time = get_current_time<chrono::milliseconds>();
         if (Config::get().time_limit != 0 && (cur_time - start_time).count() >= 1000 * Config::get().time_limit) {
             break;
         }
@@ -114,15 +117,13 @@ int main(int argc, char *argv[]) {
             for (int x = 0; x < Config::get().width; ++x) {
                 const auto sample_count = static_cast<float>(samples_count[x][y]);
                 if (rays_count > 10 && sample_count > 0) {
-                    vec3 D = (color2_map[x][y] / sample_count -
-                              (color_map[x][y] / sample_count) *
-                              (color_map[x][y] / sample_count));
+                    vec3 D = (color2_map[x][y] / sample_count - sqr(color_map[x][y] / sample_count));
                     if ((rays_count % 4) && D.r < Config::get().error &&
                         D.g < Config::get().error && D.b < Config::get().error) {
                         continue;
                     }
                 }
-                vec4 direction = vec4(
+                const vec4 direction = vec4(
                         (x + distribution(generator)) / Config::get().width - 0.5f,
                         -(y + distribution(generator)) / Config::get().height + 0.5f, 1, 0);
                 rays[y * Config::get().width + x] = Ray(vec4(0, 0, -20, 1), direction, 0, ivec2(x, y));
@@ -142,7 +143,7 @@ int main(int argc, char *argv[]) {
             for (int x = 0; x < Config::get().width; ++x) {
                 if (Config::get().update != 0 && rays_count % Config::get().update == 0) {
                     if (samples_count[x][y]) {
-                        vec3 c =
+                        const vec3 c =
                                 pow(color_map[x][y] / static_cast<float>(samples_count[x][y]),
                                     vec3(Config::get().gamma_correction)) *
                                 255.0f;
@@ -166,10 +167,8 @@ int main(int argc, char *argv[]) {
                 continue;
             }
             const auto sample_count = static_cast<float>(samples_count[x][y]);
-            vec3 D = (color2_map[x][y] / sample_count -
-                      (color_map[x][y] / sample_count) *
-                      (color_map[x][y] / sample_count));
-            float disp = D.r + D.g + D.b;
+            const vec3 D = color2_map[x][y] / sample_count - sqr(color_map[x][y] / sample_count);
+            const float disp = D.r + D.g + D.b;
             if (disp > max_dispersion) {
                 max_dispersion = disp;
             }
@@ -200,8 +199,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    chrono::milliseconds end_time = chrono::duration_cast<chrono::milliseconds>(
-            chrono::system_clock::now().time_since_epoch());
+    const chrono::milliseconds end_time = get_current_time<chrono::milliseconds>();
     time_t t = time(nullptr);
     struct tm *now = localtime(&t);
     string date = to_string(now->tm_year + 1900) + '-' +

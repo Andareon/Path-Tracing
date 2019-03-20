@@ -1,6 +1,7 @@
 #ifndef RAY_TRACING_CONFIG_H
 #define RAY_TRACING_CONFIG_H
 
+#include <ctime>
 #include <string>
 
 class Config {
