@@ -178,7 +178,7 @@ int main(int argc, char *argv[]) {
             average_dispersion += disp;
             color_map[x][y] =
                     pow(color_map[x][y] / static_cast<float>(samples_count[x][y]),
-                        vec3(1 / 2.2f)) *
+                        vec3(Config::get().gamma_correction)) *
                     255.0f;
         }
     }
