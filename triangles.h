@@ -29,8 +29,8 @@ public:
         for (int i = 0; i < vertices.size(); ++i) {
             vertices_[i] = vertices[i];
         }
-        glm::vec3 AB = vertices_[1] - vertices_[0];
-        glm::vec3 AC = vertices_[2] - vertices_[0];
+        const glm::vec3 AB = vertices_[1] - vertices_[0];
+        const glm::vec3 AC = vertices_[2] - vertices_[0];
         SetNormal(glm::cross(AB, AC));
         square = ParallelogramSquare(AB, AC);
     }

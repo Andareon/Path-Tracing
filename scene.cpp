@@ -107,16 +107,15 @@ void Scene::AddTriangle(Triangle triangle) { triangles_.push_back(triangle); }
 
 void Scene::TraceRay(Ray &ray) {
     float distance = INFINITY;
-    int triangles_count = triangles_.size();
-    int i = 0, current_triangle = -1;
-    for (i = 0; i < triangles_count; ++i) {
+    int current_triangle = -1;
+    for (int i = 0; i < triangles_.size(); ++i) {
         if (triangles_[i].Intersect(ray, distance)) {
             current_triangle = i;
         }
     }
     if (current_triangle > -1) {
-        vec4 drop_point = ray.GetBegin() + ray.GetDirection() * distance;
-        vec4 normal = triangles_[current_triangle].GetNormal();
+        const vec4 drop_point = ray.GetBegin() + ray.GetDirection() * distance;
+        const vec4 normal = triangles_[current_triangle].GetNormal();
         triangles_[current_triangle].GetMaterial().Process(ray, drop_point, normal);
     } else {
         if (!Config::get().skybox.empty()) {

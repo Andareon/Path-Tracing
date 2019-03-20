@@ -182,6 +182,7 @@ int main(int argc, char *argv[]) {
                     255.0f;
         }
     }
+    average_dispersion /= Config::get().width * Config::get().height;
 
     if (Config::get().gauss) {
         color_map = GaussBlur(color_map, Config::get().gauss);
@@ -200,15 +201,15 @@ int main(int argc, char *argv[]) {
     }
 
     const chrono::milliseconds end_time = get_current_time<chrono::milliseconds>();
-    time_t t = time(nullptr);
-    struct tm *now = localtime(&t);
-    string date = to_string(now->tm_year + 1900) + '-' +
+    const time_t t = time(nullptr);
+    const tm *now = localtime(&t);
+    const string date = to_string(now->tm_year + 1900) + '-' +
                   to_string(now->tm_mon + 1) + '-' + to_string(now->tm_mday) +
                   '-' + to_string(now->tm_hour) + '-' + to_string(now->tm_min) +
                   '-' + to_string(now->tm_sec) + "  " +
                   to_string((end_time - start_time).count()) + "   " + to_string(rays_count) + " of " +
                   to_string(Config::get().rays_per_pixel) + "  max_disp " + to_string(max_dispersion)
-                  + "  min_disp " + to_string(min_dispersion) + "  aver_disp " + to_string(average_dispersion / Config::get().width / Config::get().height);
+                  + "  min_disp " + to_string(min_dispersion) + "  aver_disp " + to_string(average_dispersion);
     image.save_image(date + ".bmp");
     image.save_image("../result.bmp");
     TimerStorage::get().PrintTimers();

@@ -30,7 +30,7 @@ private:
     std::vector<MaterialProcessor> functions_;
 
 public:
-    void Process(Ray &ray, glm::vec4 drop_point, glm::vec4 normal) {
+    void Process(Ray &ray, const glm::vec4& drop_point, const glm::vec4& normal) {
         if (functions_.empty()) {
             ray.MakeInvalid();
         } else if (functions_.size() == 1) {
@@ -52,16 +52,16 @@ public:
     }
 };
 
-inline Material Factory(MaterialCharacteristics characteristics,
+inline Material Factory(const MaterialCharacteristics &characteristics,
                         std::vector<std::vector<glm::vec3> > &color_map,
                         std::vector<std::vector<glm::vec3> > &color2_map,
                         std::vector<std::vector<int> > &samples_count) {
-    glm::vec3 Kd = characteristics.Kd;
-    glm::vec3 Ke = characteristics.Ke;
+    const glm::vec3 Kd = characteristics.Kd;
+    const glm::vec3 Ke = characteristics.Ke;
     Material material;
     if (Ke != glm::vec3(0)) {
         auto function = [&color_map, &color2_map, &samples_count, Kd](
-                Ray &ray, glm::vec4 drop_point, glm::vec4 N) {
+                Ray &ray, glm::vec4, glm::vec4 N) {
             if (dot(ray.GetDirection(), N) > 0) {
                 ray.MakeInvalid();
                 return;
@@ -75,14 +75,14 @@ inline Material Factory(MaterialCharacteristics characteristics,
         material.AddFunctions(function, 1);
     } else {
         auto function = [Kd](Ray &ray, glm::vec4 drop_point, glm::vec4 N) {
-            float xi1 = Random(), xi2 = Random();
+            const float xi1 = Random(), xi2 = Random();
             glm::vec4 rnd =
                     glm::normalize(glm::vec4(std::sqrt(xi1) * std::cos(2 * pi * xi2),
                                              std::sqrt(xi1) * std::sin(2 * pi * xi2), std::sqrt(1 - xi1), 0));
             if (glm::dot(N, rnd) < 0) {
                 rnd *= -1;
             }
-            float dt = std::max(0.0f, glm::dot(N, rnd));
+            const float dt = std::max(0.0f, glm::dot(N, rnd));
             ray.Reflect(drop_point + N * Config::get().eps, rnd, Kd * dt);
         };
         material.AddFunctions(function, 1);
