@@ -19,13 +19,13 @@ inline float ParallelogramSquare(const glm::vec3 &dir1, const glm::vec3 &dir2) {
 class Triangle {
 private:
     glm::vec4 plane_;
-    Material material_;
+    int materialIdx;
     std::array<glm::vec3, 3> vertices_;
     float square;
 
 public:
-    Triangle(const std::array<glm::vec4, 3> &vertices, Material material)
-            : material_(std::move(material)) {
+    Triangle(const std::array<glm::vec4, 3> &vertices, int material)
+            : materialIdx(material) {
         for (int i = 0; i < vertices.size(); ++i) {
             vertices_[i] = vertices[i];
         }
@@ -43,7 +43,7 @@ public:
         plane_.w = -dot(normal, vertices_[0]);
     }
 
-    Material GetMaterial() const { return material_; }
+    int GetMaterial() const { return materialIdx; }
 
     bool Intersect(const Ray &ray, float &distance) const {
         const float new_distance = PlaneIntersect(ray, plane_);

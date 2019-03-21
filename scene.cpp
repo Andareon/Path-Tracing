@@ -93,7 +93,7 @@ void Scene::LoadModel(string path) {
             triangles_.emplace_back(array<vec4, 3>{temp_vertices[vertex_index[0]],
                                                    temp_vertices[vertex_index[1]],
                                                    temp_vertices[vertex_index[2]]},
-                                    materials_[current_material]);
+                                    current_material);
             if (normal_index[0] >= 0) {
                 triangles_.back().SetNormal(temp_normals[normal_index[0]]);
             }
@@ -117,7 +117,7 @@ void Scene::TraceRay(Ray &ray) {
     if (current_triangle > -1) {
         vec4 drop_point = ray.GetBegin() + ray.GetDirection() * distance;
         vec4 normal = triangles_[current_triangle].GetNormal();
-        triangles_[current_triangle].GetMaterial().Process(ray, drop_point, normal);
+        materials_[triangles_[current_triangle].GetMaterial()].Process(ray, drop_point, normal);
     } else {
         if (!Config::get().skybox.empty()) {
             const float theta = acos(ray.GetDirection().y) / pi;
