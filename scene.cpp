@@ -90,10 +90,12 @@ void Scene::LoadModel(string path) {
                 texture_coords_index[i] = atoi(cur[1].c_str()) - 1;
                 normal_index[i] = atoi(cur[2].c_str()) - 1;
             }
+            trianglesIndex_.push_back(trianglesCount_);
             triangles_.emplace_back(array<vec4, 3>{temp_vertices[vertex_index[0]],
                                                    temp_vertices[vertex_index[1]],
                                                    temp_vertices[vertex_index[2]]},
                                     current_material);
+            trianglesCount_++;
             if (normal_index[0] >= 0) {
                 triangles_.back().SetNormal(temp_normals[normal_index[0]]);
             }
@@ -101,23 +103,43 @@ void Scene::LoadModel(string path) {
             file >> current_material;
         }
     }
+    BoundingBox BB = BoundingBox(vec3(-11, -11, -22), vec3(11, 11, 11));
+    if (Config::get().KD) {
+        KD_Tree_ = std::make_unique<Node>(trianglesIndex_, 8, BB, triangles_);
+    }
 }
 
 void Scene::AddTriangle(Triangle triangle) { triangles_.push_back(triangle); }
 
 void Scene::TraceRay(Ray &ray) {
-    float distance = INFINITY;
-    int triangles_count = triangles_.size();
-    int i = 0, current_triangle = -1;
-    for (i = 0; i < triangles_count; ++i) {
-        if (triangles_[i].Intersect(ray, distance)) {
-            current_triangle = i;
+    bool check;
+    int mater;
+    vec4 dropPoint;
+    vec4 norm;
+    if (Config::get().KD) {
+        IntersectionOptions IO;
+        check = KD_Tree_->Trace(ray, IO);
+        mater = IO.materialIndex_;
+        dropPoint = IO.intersectPoint_;
+        norm = IO.normal_;
+    } else {
+        float distance = INFINITY;
+        int current_triangle = -1;
+        for (int i = 0; i < triangles_.size(); ++i) {
+            if (triangles_[i].Intersect(ray, distance)) {
+                current_triangle = i;
+            }
+        }
+        check = current_triangle > -1;
+        if (current_triangle > -1) {
+            dropPoint = ray.GetBegin() + ray.GetDirection() * distance;
+            norm = triangles_[current_triangle].GetNormal();
+            mater = triangles_[current_triangle].GetMaterial();
         }
     }
-    if (current_triangle > -1) {
-        vec4 drop_point = ray.GetBegin() + ray.GetDirection() * distance;
-        vec4 normal = triangles_[current_triangle].GetNormal();
-        materials_[triangles_[current_triangle].GetMaterial()].Process(ray, drop_point, normal);
+
+    if (check) {
+        materials_[mater].Process(ray, dropPoint, norm);
     } else {
         if (!Config::get().skybox.empty()) {
             const float theta = acos(ray.GetDirection().y) / pi;

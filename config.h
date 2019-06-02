@@ -21,6 +21,7 @@ public:
     float eps = 1e-6;
     float error = 0.001;
     int update = 32;
+    bool KD = true;
     float gamma_correction = 1 / 2.2f;
     std::string model_path = "../models/";
     std::string model_name = "Tor.obj";
@@ -93,6 +94,10 @@ public:
 
             if (std::string(argv[i]) == "-TL") {
                 time_limit = std::atoi(argv[i + 1]);
+            }
+
+            if ((std::string)argv[i] == "-KD") {
+                KD = std::atoi(argv[i + 1]);
             }
         }
     }

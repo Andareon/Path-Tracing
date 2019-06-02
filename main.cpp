@@ -4,6 +4,7 @@
 
 #include "material.h"
 #include "scene.h"
+#include "KD-Tree.h"
 
 using namespace std;
 using namespace glm;
