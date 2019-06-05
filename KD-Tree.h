@@ -1,11 +1,10 @@
 #ifndef RAY_TRACING_KD_TREE_H
 #define RAY_TRACING_KD_TREE_H
 
-#include <vector>
 #include <memory>
 
 #include "glm/geometric.hpp"
-#include "triangles.h"
+#include "Tracer.h"
 
 struct BoundingBox {
     glm::vec3 min;
@@ -24,12 +23,6 @@ struct BoundingBox {
     }
 
     BoundingBox(glm::vec3 mn, glm::vec3 mx): min(mn), max(mx){}
-};
-
-struct IntersectionOptions {
-    glm::vec4 intersectPoint_;
-    glm::vec4 normal_;
-    int materialIndex_;
 };
 
 class BaseNode {
@@ -145,4 +138,16 @@ public:
         }
     }
 };
+
+class KDTreeTracer : public BaseTracer {
+    Node root;
+public:
+    KDTreeTracer(const std::vector<int> &triangles, int depth, BoundingBox BB, std::vector<Triangle> &triangles_) :
+    root(triangles, depth, BB, triangles_) {}
+
+    bool Trace(Ray &ray, IntersectionOptions &options) final {
+        return root.Trace(ray, options);
+    }
+};
+
 #endif //RAY_TRACING_KD_TREE_H

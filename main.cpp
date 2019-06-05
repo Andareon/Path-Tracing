@@ -4,7 +4,7 @@
 
 #include "material.h"
 #include "scene.h"
-#include "KD-Tree.h"
+#include "Tracer.h"
 
 using namespace std;
 using namespace glm;

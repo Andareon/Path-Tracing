@@ -1,3 +1,5 @@
+#include "KD-Tree.h"
+
 #include "scene.h"
 
 using namespace std;
@@ -23,7 +25,7 @@ Scene::Scene(vector<vector<vec3>> &color_map, vector<vector<vec3>> &color2_map, 
 };
 
 
-void Scene::LoadModel(string path) {
+void Scene::LoadModel(const string &path) {
     vector<vec4> temp_vertices;
     vector<vec2> temp_texture_coords;
     vector<vec3> temp_normals;
@@ -34,6 +36,7 @@ void Scene::LoadModel(string path) {
         exit(1);
     }
     int current_material = 0;
+    int trianglesCount_ = 0;
     while (!file.eof()) {
         file >> input;
         if (file.eof()) {
@@ -105,41 +108,17 @@ void Scene::LoadModel(string path) {
     }
     BoundingBox BB = BoundingBox(vec3(-11, -11, -22), vec3(11, 11, 11));
     if (Config::get().KD) {
-        KD_Tree_ = std::make_unique<Node>(trianglesIndex_, 8, BB, triangles_);
+        tracer = std::make_unique<KDTreeTracer>(trianglesIndex_, 8, BB, triangles_);
+    } else {
+        tracer = std::make_unique<SimpleTracer>(triangles_);
     }
 }
 
-void Scene::AddTriangle(Triangle triangle) { triangles_.push_back(triangle); }
-
 void Scene::TraceRay(Ray &ray) {
-    bool check;
-    int mater;
-    vec4 dropPoint;
-    vec4 norm;
-    if (Config::get().KD) {
-        IntersectionOptions IO;
-        check = KD_Tree_->Trace(ray, IO);
-        mater = IO.materialIndex_;
-        dropPoint = IO.intersectPoint_;
-        norm = IO.normal_;
-    } else {
-        float distance = INFINITY;
-        int current_triangle = -1;
-        for (int i = 0; i < triangles_.size(); ++i) {
-            if (triangles_[i].Intersect(ray, distance)) {
-                current_triangle = i;
-            }
-        }
-        check = current_triangle > -1;
-        if (current_triangle > -1) {
-            dropPoint = ray.GetBegin() + ray.GetDirection() * distance;
-            norm = triangles_[current_triangle].GetNormal();
-            mater = triangles_[current_triangle].GetMaterial();
-        }
-    }
+    IntersectionOptions intersection = {};
 
-    if (check) {
-        materials_[mater].Process(ray, dropPoint, norm);
+    if (tracer->Trace(ray, intersection)) {
+        materials_[intersection.materialIndex_].Process(ray, intersection.intersectPoint_, intersection.normal_);
     } else {
         if (!Config::get().skybox.empty()) {
             const float theta = acos(ray.GetDirection().y) / pi;
