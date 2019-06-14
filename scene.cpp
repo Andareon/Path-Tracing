@@ -45,8 +45,8 @@ void Scene::LoadModel(string path) {
             ifstream mtl_file(Config::get().model_path + mtl_file_name);
 
             string mtl_input = "1";
-            MaterialCharacteristics characteristics = {};
             while (!mtl_file.eof()) {
+                MaterialCharacteristics characteristics = MaterialCharacteristics();
                 while (!mtl_file.eof() && mtl_input != "newmtl") {
                     mtl_file >> mtl_input;
                 }
@@ -58,6 +58,11 @@ void Scene::LoadModel(string path) {
                     } else if (mtl_input == "Ke") {
                         mtl_file >> characteristics.Ke.x >> characteristics.Ke.y >>
                                  characteristics.Ke.z;
+                    } else if (mtl_input == "Ks") {
+                        mtl_file >> characteristics.Ks.x >> characteristics.Ks.y >>
+                                 characteristics.Ks.z;
+                    } else if (mtl_input == "Ns") {
+                        mtl_file >> characteristics.Ns;
                     }
                     mtl_file >> mtl_input;
                 }

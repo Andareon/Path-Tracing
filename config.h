@@ -19,7 +19,7 @@ public:
     int max_ray_reflections = 8;
     int median = 0;
     int gauss = 0;
-    float eps = 1e-6;
+    float eps = 1e-4;
     float error = 0.001;
     int update = 32;
     float gamma_correction = 1 / 2.2f;

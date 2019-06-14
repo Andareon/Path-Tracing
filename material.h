@@ -22,6 +22,9 @@ inline float Random() {
 struct MaterialCharacteristics {
     glm::vec3 Ke = glm::vec3(0);
     glm::vec3 Kd = glm::vec3(0);
+    glm::vec3 Ks = glm::vec3(0);
+    float Ns = 0;
+    MaterialCharacteristics() : Ke(0), Kd(0), Ks(0), Ns(0) {};
 };
 
 class Material {
@@ -37,10 +40,10 @@ public:
             functions_[0](ray, drop_point, normal);
         } else {
             float sample = Random();
-            int i = 0;
+            int i = -1;
             while (sample > 0) {
-                sample -= chance_[i];
                 ++i;
+                sample -= chance_[i];
             }
             functions_[i](ray, drop_point, normal);
         }
@@ -58,8 +61,10 @@ inline Material Factory(const MaterialCharacteristics &characteristics,
                         std::vector<std::vector<int> > &samples_count) {
     const glm::vec3 Kd = characteristics.Kd;
     const glm::vec3 Ke = characteristics.Ke;
+    const glm::vec3 Ks = characteristics.Ks;
+    float Ns = characteristics.Ns;
     Material material;
-    if (Ke != glm::vec3(0)) {
+    if (Ke != glm::vec3(0)) { // emissive
         auto function = [&color_map, &color2_map, &samples_count, Kd](
                 Ray &ray, glm::vec4, glm::vec4 N) {
             if (dot(ray.GetDirection(), N) > 0) {
@@ -74,18 +79,28 @@ inline Material Factory(const MaterialCharacteristics &characteristics,
         };
         material.AddFunctions(function, 1);
     } else {
-        auto function = [Kd](Ray &ray, glm::vec4 drop_point, glm::vec4 N) {
-            const float xi1 = Random(), xi2 = Random();
-            glm::vec4 rnd =
-                    glm::normalize(glm::vec4(std::sqrt(xi1) * std::cos(2 * pi * xi2),
-                                             std::sqrt(xi1) * std::sin(2 * pi * xi2), std::sqrt(1 - xi1), 0));
-            if (glm::dot(N, rnd) < 0) {
-                rnd *= -1;
-            }
-            const float dt = std::max(0.0f, glm::dot(N, rnd));
-            ray.Reflect(drop_point + N * Config::get().eps, rnd, Kd * dt);
-        };
-        material.AddFunctions(function, 1);
+        if (Ns != 0 and Ks != glm::vec3(0)) { // glossy
+            auto function = [Ks](Ray &ray, glm::vec4 drop_point, glm::vec4 N) {
+                ray.Reflect(drop_point + N * Config::get().eps, reflect(ray.GetDirection(), N), Ks);
+            };
+            material.AddFunctions(function, Ns / 1000);
+        }
+
+        if (1 - Ns / 1000 > 0) { // diffuse
+            auto function = [Kd, Ns](Ray &ray, glm::vec4 drop_point, glm::vec4 N) {
+                const float xi1 = Random(), xi2 = Random();
+                glm::vec4 rnd =
+                        glm::normalize(glm::vec4(std::sqrt(xi1) * std::cos(2 * pi * xi2),
+                                                 std::sqrt(xi1) * std::sin(2 * pi * xi2), std::sqrt(1 - xi1), 0));
+                if (glm::dot(N, rnd) < 0) {
+                    rnd *= -1;
+                }
+                const float dt = std::max(0.0f, glm::dot(N, rnd));
+                ray.Reflect(drop_point + N * Config::get().eps, rnd, Kd * dt);
+            };
+            material.AddFunctions(function, 1 - Ns / 1000);
+        }
+
     }
     return material;
 }
