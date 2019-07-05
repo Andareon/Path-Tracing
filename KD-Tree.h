@@ -69,12 +69,10 @@ class Node : public BaseNode {
 private:
     std::unique_ptr<BaseNode> left_;
     std::unique_ptr<BaseNode> right_;
-    int depth_;
     int planeCoord_;
     float plane_;
 public:
-    Node(const std::vector<int> &triangles, int depth, BoundingBox BB, std::vector<Triangle> &triangles_) {
-        depth_ = depth;
+    Node(const std::vector<int> &trianglesIndex_, int depth, BoundingBox BB, std::vector<Triangle> &triangles_) {
         BB_ = BB;
         BoundingBox leftBB = BB;
         BoundingBox rightBB = BB;
@@ -91,13 +89,13 @@ public:
         float currentPlane = BB.min[planeCoord_];
         float delta = bbSides[planeCoord_] / SPACE_PARTITIONS;
         plane_ = 0;
-        float minSAH = triangles.size() * (SPACE_PARTITIONS + 1);
+        float minSAH = trianglesIndex_.size() * (SPACE_PARTITIONS + 1);
         bool splited = false;
         for (int leftPartitions = 1; leftPartitions < SPACE_PARTITIONS; ++leftPartitions) {
             currentPlane += delta;
             int leftCount = 0;
             int rightCount = 0;
-            for (int j = 0; j < triangles.size(); ++j) {
+            for (int j = 0; j < trianglesIndex_.size(); ++j) {
                 if (BoundingBox(triangles_[j]).min[planeCoord_] < currentPlane) {
                     leftCount++;
                 }
@@ -123,7 +121,7 @@ public:
         std::vector<int> leftTriangles;
         std::vector<int> rightTriangles;
 
-        for (int triangle_id: triangles) {
+        for (int triangle_id: trianglesIndex_) {
             const BoundingBox triangleBB = BoundingBox(triangles_[triangle_id]);
             if (triangleBB.min[planeCoord_] <= plane_) {
                 leftTriangles.push_back(triangle_id);
@@ -134,8 +132,8 @@ public:
             }
         }
 
-        if (!splited || leftTriangles.size() == triangles.size() || rightTriangles.size() == triangles.size()) {
-            left_ = std::make_unique<Leave>(triangles, triangles_);
+        if (!splited || leftTriangles.size() == trianglesIndex_.size() || rightTriangles.size() == trianglesIndex_.size()) {
+            left_ = std::make_unique<Leave>(trianglesIndex_, triangles_);
             right_ = std::make_unique<Leave>(std::vector<int>(), triangles_);
             return;
         }
@@ -214,8 +212,8 @@ public:
 class KDTreeTracer : public BaseTracer {
     Node root;
 public:
-    KDTreeTracer(const std::vector<int> &triangles, int depth, BoundingBox BB, std::vector<Triangle> &triangles_) :
-    root(triangles, depth, BB, triangles_) {}
+    KDTreeTracer(const std::vector<int> &trianglesIndex_, int depth, BoundingBox BB, std::vector<Triangle> &triangles_) :
+    root(trianglesIndex_, depth, BB, triangles_) {}
 
     bool Trace(Ray &ray, IntersectionOptions &options) final {
         return root.Trace(ray, options, INFINITY);
