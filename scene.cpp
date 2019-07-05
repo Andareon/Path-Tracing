@@ -108,7 +108,7 @@ void Scene::LoadModel(const string &path) {
     }
     BoundingBox BB = BoundingBox(vec3(-11, -11, -22), vec3(11, 11, 11));
     if (Config::get().KD) {
-        tracer = std::make_unique<KDTreeTracer>(trianglesIndex_, 8, BB, triangles_);
+        tracer = std::make_unique<KDTreeTracer>(trianglesIndex_, 10, BB, triangles_);
     } else {
         tracer = std::make_unique<SimpleTracer>(triangles_);
     }
